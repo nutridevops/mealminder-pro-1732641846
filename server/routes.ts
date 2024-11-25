@@ -55,9 +55,21 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ errors: result.error.errors });
       }
 
-      const [newMealPlan] = await db.insert(mealPlans).values(result.data).returning();
+      // Ensure recipes object has the correct structure
+      const recipes = {
+        breakfast: result.data.recipes.breakfast ?? null,
+        lunch: result.data.recipes.lunch ?? null,
+        dinner: result.data.recipes.dinner ?? null
+      };
+
+      const [newMealPlan] = await db.insert(mealPlans).values({
+        ...result.data,
+        recipes
+      }).returning();
+
       res.status(201).json(newMealPlan);
     } catch (error) {
+      console.error('Error creating meal plan:', error);
       res.status(500).send("Failed to create meal plan");
     }
   });

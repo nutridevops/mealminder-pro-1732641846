@@ -19,7 +19,8 @@ export default function PlannerPage() {
   );
 
   const getMealRecipe = (mealType: 'breakfast' | 'lunch' | 'dinner') => {
-    const recipeId = currentPlan?.recipes[mealType];
+    if (!currentPlan?.recipes) return null;
+    const recipeId = (currentPlan.recipes as Record<string, number | null>)[mealType];
     if (!recipeId) return null;
     return recipes.find(r => r.id === recipeId);
   };
