@@ -19,18 +19,30 @@ export default function PlannerPage() {
   );
 
   const getMealRecipe = (mealType: 'breakfast' | 'lunch' | 'dinner') => {
-    if (!currentPlan?.recipes[mealType]) return null;
-    return recipes.find(r => r.id === currentPlan.recipes[mealType]);
+    const recipeId = currentPlan?.recipes[mealType];
+    if (!recipeId) return null;
+    return recipes.find(r => r.id === recipeId);
   };
 
-  const handleAddMeal = async (recipeId: number, mealType: string) => {
+  const handleAddMeal = async (recipeId: number, mealType: 'breakfast' | 'lunch' | 'dinner') => {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
     if (currentPlan) {
       // Update existing plan
+      const updatedRecipes = {
+        ...currentPlan.recipes,
+        [mealType]: recipeId
+      };
+      await updateMealPlan({
+        id: currentPlan.id,
+        recipes: updatedRecipes
+      });
     } else {
       await createMealPlan({
-        date: selectedDate,
+        date: dateStr,
         recipes: {
-          [mealType]: recipeId
+          breakfast: mealType === 'breakfast' ? recipeId : null,
+          lunch: mealType === 'lunch' ? recipeId : null,
+          dinner: mealType === 'dinner' ? recipeId : null
         }
       });
     }
