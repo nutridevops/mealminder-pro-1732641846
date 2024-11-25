@@ -110,7 +110,7 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
           Add New Recipe
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Recipe</DialogTitle>
         </DialogHeader>
@@ -118,7 +118,7 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Quick Recipe Import Section */}
-            <div className="bg-primary/5 p-6 rounded-lg border-2 border-primary/20 shadow-sm">
+            <div className="bg-primary/5 p-4 md:p-6 rounded-lg border-2 border-primary/20 shadow-sm mb-6">
               <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                 <Link className="h-5 w-5" />
                 Quick Recipe Import
@@ -131,7 +131,7 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
                     <FormItem className="flex-1">
                       <FormLabel className="text-base">Recipe URL</FormLabel>
                       <FormControl>
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                           <Input
                             value={recipeUrl}
                             onChange={(e) => setRecipeUrl(e.target.value)}
@@ -142,7 +142,7 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
                             type="button"
                             size="lg"
                             variant="default"
-                            className="min-w-[140px] h-12"
+                            className="h-12 sm:min-w-[140px]"
                             onClick={async () => {
                               try {
                                 const recipe = await extractRecipe(recipeUrl);
