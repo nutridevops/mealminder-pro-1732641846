@@ -78,7 +78,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
     try {
       const sanitizedValues = {
         ...values,
-        website: values.website ? websiteUrlSchema.parse(values.website) : null
+        website: values.website ? websiteSchema.parse(values.website) : null
       };
       
       const supplier = await onAdd(sanitizedValues);
