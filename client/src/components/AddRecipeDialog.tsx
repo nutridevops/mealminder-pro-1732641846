@@ -3,7 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Minus, Timer } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Plus, Minus, Timer, Link, AlertTriangle, Download } from "lucide-react";
+import { useRecipeExtraction } from "@/hooks/use-recipe-extraction";
 import { useForm, useFieldArray } from "react-hook-form";
 import { insertRecipeSchema, type InsertRecipe } from "@db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,7 +21,15 @@ type AddRecipeDialogProps = {
 
 export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
   const [open, setOpen] = useState(false);
+  const [recipeUrl, setRecipeUrl] = useState("");
   const { toast } = useToast();
+  const {
+    extractRecipe,
+    isExtracting,
+    isAdapting,
+    healthWarnings,
+    adaptedRecipe
+  } = useRecipeExtraction();
   
   const form = useForm<InsertRecipe>({
     resolver: zodResolver(insertRecipeSchema),
@@ -84,6 +94,77 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex gap-4">
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Recipe URL</FormLabel>
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <Input
+                            value={recipeUrl}
+                            onChange={(e) => setRecipeUrl(e.target.value)}
+                            placeholder="Paste a recipe URL to extract"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={async () => {
+                              try {
+                                const recipe = await extractRecipe(recipeUrl);
+                                form.reset(recipe);
+                                toast({
+                                  title: "Recipe extracted successfully",
+                                  variant: "default"
+                                });
+                              } catch (error) {
+                                toast({
+                                  title: "Failed to extract recipe",
+                                  description: "Please try again or enter the recipe manually",
+                                  variant: "destructive"
+                                });
+                              }
+                            }}
+                            disabled={isExtracting || !recipeUrl}
+                          >
+                            {isExtracting ? (
+                              <Timer className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4 mr-2" />
+                            )}
+                            {isExtracting ? "Extracting..." : "Extract"}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {isAdapting && (
+                <div className="flex items-center justify-center p-4 bg-muted rounded-md">
+                  <Timer className="h-4 w-4 animate-spin mr-2" />
+                  <span>Adapting recipe to your health profile...</span>
+                </div>
+              )}
+
+              {healthWarnings.length > 0 && (
+                <div className="space-y-2">
+                  {healthWarnings.map((warning, index) => (
+                    <Alert key={index} variant={warning.type === 'high' ? "destructive" : "default"}>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Health Adaptation Warning</AlertTitle>
+                      <AlertDescription>{warning.message}</AlertDescription>
+                    </Alert>
+                  ))}
+                </div>
+              )}
+            </div>
             <FormField
               control={form.control}
               name="name"
