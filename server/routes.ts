@@ -55,18 +55,18 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ errors: result.error.errors });
       }
 
-      // Type assert and ensure recipes object has the correct structure
+      // Ensure recipes object has the correct structure with proper typing
       const inputRecipes = result.data.recipes as {
-        breakfast?: number | null;
-        lunch?: number | null;
-        dinner?: number | null;
+        breakfast?: number | undefined;
+        lunch?: number | undefined;
+        dinner?: number | undefined;
       };
 
-      // Build recipes object with proper null checking
+      // Build recipes object matching the schema type
       const recipes = {
-        breakfast: inputRecipes?.breakfast ?? null,
-        lunch: inputRecipes?.lunch ?? null,
-        dinner: inputRecipes?.dinner ?? null
+        breakfast: inputRecipes.breakfast || undefined,
+        lunch: inputRecipes.lunch || undefined,
+        dinner: inputRecipes.dinner || undefined
       };
 
       const [newMealPlan] = await db.insert(mealPlans).values({

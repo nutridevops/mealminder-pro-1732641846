@@ -26,12 +26,27 @@ async function extractRecipeFromUrl(url: string): Promise<InsertRecipe> {
       vitamins: {
         vitaminA: 800,
         vitaminC: 60,
-        vitaminD: 20
+        vitaminD: 20,
+        vitaminE: 15,
+        vitaminK: 80,
+        thiamin: 1.2,
+        riboflavin: 1.3,
+        niacin: 16,
+        b6: 1.7,
+        b12: 2.4,
+        folate: 400
       },
       minerals: {
-        calcium: 200,
-        iron: 4,
-        potassium: 400
+        calcium: 1000,
+        iron: 18,
+        magnesium: 400,
+        phosphorus: 1000,
+        potassium: 3500,
+        sodium: 2300,
+        zinc: 11,
+        copper: 0.9,
+        manganese: 2.3,
+        selenium: 55
       }
     },
     prepTime: 15,

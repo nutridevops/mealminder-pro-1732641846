@@ -43,8 +43,31 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
         protein: 0,
         carbs: 0,
         fat: 0,
-        vitamins: {},
-        minerals: {}
+        vitamins: {
+          vitaminA: 0,
+          vitaminC: 0,
+          vitaminD: 0,
+          vitaminE: 0,
+          vitaminK: 0,
+          thiamin: 0,
+          riboflavin: 0,
+          niacin: 0,
+          b6: 0,
+          b12: 0,
+          folate: 0
+        },
+        minerals: {
+          calcium: 0,
+          iron: 0,
+          magnesium: 0,
+          phosphorus: 0,
+          potassium: 0,
+          sodium: 0,
+          zinc: 0,
+          copper: 0,
+          manganese: 0,
+          selenium: 0
+        }
       },
       prepTime: 0,
       cookTime: 0,
@@ -175,83 +198,7 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
                 )}
               </div>
             </div>
-            <div className="space-y-4 bg-muted/30 p-6 rounded-lg border">
-              <h3 className="text-lg font-semibold mb-2">Quick Recipe Import</h3>
-              <div className="flex gap-4">
-                <FormField
-                  control={form.control}
-                  name="url"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormLabel className="text-base">Recipe URL</FormLabel>
-                      <FormControl>
-                        <div className="flex gap-3">
-                          <Input
-                            value={recipeUrl}
-                            onChange={(e) => setRecipeUrl(e.target.value)}
-                            placeholder="Paste a recipe URL to automatically extract details"
-                            className="flex-1 h-12 text-base"
-                          />
-                          <Button
-                            type="button"
-                            size="lg"
-                            variant="default"
-                            className="min-w-[120px]"
-                            onClick={async () => {
-                              try {
-                                const recipe = await extractRecipe(recipeUrl);
-                                form.reset(recipe);
-                                toast({
-                                  title: "Recipe extracted successfully",
-                                  variant: "default"
-                                });
-                              } catch (error) {
-                                toast({
-                                  title: "Failed to extract recipe",
-                                  description: "Please try again or enter the recipe manually",
-                                  variant: "destructive"
-                                });
-                              }
-                            }}
-                            disabled={isExtracting || !recipeUrl}
-                          >
-                            {isExtracting ? (
-                              <Timer className="h-5 w-5 animate-spin mr-2" />
-                            ) : (
-                              <Download className="h-5 w-5 mr-2" />
-                            )}
-                            {isExtracting ? "Extracting..." : "Extract Recipe"}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Paste a URL from any recipe website to automatically extract ingredients, instructions, and nutritional information
-                      </p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {isAdapting && (
-                <div className="flex items-center justify-center p-4 bg-muted rounded-md">
-                  <Timer className="h-4 w-4 animate-spin mr-2" />
-                  <span>Adapting recipe to your health profile...</span>
-                </div>
-              )}
-
-              {healthWarnings.length > 0 && (
-                <div className="space-y-2">
-                  {healthWarnings.map((warning, index) => (
-                    <Alert key={index} variant={warning.type === 'high' ? "destructive" : "default"}>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Health Adaptation Warning</AlertTitle>
-                      <AlertDescription>{warning.message}</AlertDescription>
-                    </Alert>
-                  ))}
-                </div>
-              )}
-            </div>
+            
             <FormField
               control={form.control}
               name="name"
