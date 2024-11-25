@@ -169,8 +169,20 @@ export function registerRoutes(app: Express) {
 
   app.post("/api/suppliers", async (req, res) => {
     try {
+      // Validate Content-Type header
+      const contentType = req.headers['content-type'];
+      if (!contentType || !contentType.includes('application/json')) {
+        return res.status(415).json({
+          error: "Unsupported Media Type",
+          message: "Content-Type must be application/json"
+        });
+      }
+
+      console.log('Received supplier data:', JSON.stringify(req.body, null, 2));
+
       const result = insertSupplierSchema.safeParse(req.body);
       if (!result.success) {
+        console.error('Validation errors:', result.error.errors);
         return res.status(400).json({ 
           error: "Invalid supplier data",
           validation_errors: result.error.errors.map(err => ({
@@ -180,29 +192,41 @@ export function registerRoutes(app: Express) {
         });
       }
 
-      // Validate location data
-      const { location } = result.data;
-      if (!location || 
-          typeof location.latitude !== 'number' || 
-          typeof location.longitude !== 'number' ||
-          typeof location.address !== 'string' ||
-          !location.address.trim()) {
+      // Extract and validate location data
+      const { location, ...rest } = result.data;
+      const locationData = {
+        latitude: Number(location.latitude),
+        longitude: Number(location.longitude),
+        address: location.address.trim()
+      };
+
+      if (isNaN(locationData.latitude) || isNaN(locationData.longitude) || !locationData.address) {
+        console.error('Invalid location data:', locationData);
         return res.status(400).json({
           error: "Invalid location data",
           details: "Location must include valid latitude, longitude, and address"
         });
       }
 
+      // Prepare supplier data with validated location
+      const supplierData = {
+        ...rest,
+        location: locationData
+      };
+
+      console.log('Validated supplier data:', JSON.stringify(supplierData, null, 2));
+
       // Insert supplier with validated data
       const [newSupplier] = await db
         .insert(suppliers)
-        .values(result.data)
+        .values(supplierData)
         .returning();
 
       if (!newSupplier) {
         throw new Error("Failed to create supplier record");
       }
 
+      console.log('Created supplier:', JSON.stringify(newSupplier, null, 2));
       res.status(201).json(newSupplier);
     } catch (error) {
       console.error('Failed to create supplier:', error);

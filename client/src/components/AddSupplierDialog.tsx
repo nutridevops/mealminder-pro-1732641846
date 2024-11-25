@@ -2,15 +2,16 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { insertSupplierSchema, type InsertSupplier } from "@db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Store } from "lucide-react";
+import type { z } from "zod";
 
 type AddSupplierDialogProps = {
-  onAdd: (supplier: InsertSupplier) => Promise<any>;
+  onAdd: (supplier: z.infer<typeof insertSupplierSchema>) => Promise<void>;
 };
 
 export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
@@ -18,7 +19,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
-  const form = useForm<InsertSupplier>({
+  const form = useForm<z.infer<typeof insertSupplierSchema>>({
     resolver: zodResolver(insertSupplierSchema),
     defaultValues: {
       name: "",
@@ -31,7 +32,6 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       },
       deliveryRadius: 10,
       active: true,
-      integrationSettings: null,
       specialties: []
     }
   });
