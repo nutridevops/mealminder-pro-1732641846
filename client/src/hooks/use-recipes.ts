@@ -41,6 +41,11 @@ export function useRecipes() {
   const recipesQuery = useQuery<Recipe[], Error>({
     queryKey: ['recipes'],
     queryFn: fetchRecipes,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    onError: (error) => {
+      console.error('Failed to fetch recipes:', error);
+    },
   });
 
   const createRecipeMutation = useMutation({
@@ -48,6 +53,11 @@ export function useRecipes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recipes'] });
     },
+    onError: (error) => {
+      console.error('Failed to create recipe:', error);
+      throw error;
+    },
+    retry: 2,
   });
 
   const deleteRecipeMutation = useMutation({

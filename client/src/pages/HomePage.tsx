@@ -65,21 +65,21 @@ export default function HomePage() {
               variant="default"
               className="h-12 sm:w-auto"
               onClick={async () => {
-                try {
-                  const recipe = await extractRecipe(recipeUrl);
+                if (!recipeUrl.trim()) {
                   toast({
-                    title: "Recipe extracted successfully",
-                    description: "You can now find this recipe in your collection",
-                    variant: "default"
-                  });
-                  // Reset URL after successful extraction
-                  setRecipeUrl("");
-                } catch (error) {
-                  toast({
-                    title: "Failed to extract recipe",
-                    description: "Please try again or enter the recipe manually",
+                    title: "Invalid URL",
+                    description: "Please enter a valid recipe URL",
                     variant: "destructive"
                   });
+                  return;
+                }
+
+                try {
+                  await extractRecipe(recipeUrl);
+                  setRecipeUrl("");
+                } catch (error) {
+                  console.error('Recipe extraction failed:', error);
+                  // Error toast is now handled in useRecipeExtraction
                 }
               }}
               disabled={isExtracting || !recipeUrl}

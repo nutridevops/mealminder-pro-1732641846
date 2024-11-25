@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { InsertRecipe } from "@db/schema";
+import { useRecipes } from "./use-recipes";
+import { useToast } from "./use-toast";
 
-// Mock recipe extraction function
 async function extractRecipeFromUrl(url: string): Promise<InsertRecipe> {
   if (!url.startsWith('http')) {
     throw new Error('Invalid URL format. Please provide a valid URL starting with http:// or https://');
@@ -120,6 +121,8 @@ export function useRecipeExtraction() {
   const [isAdapting, setIsAdapting] = useState(false);
   const [healthWarnings, setHealthWarnings] = useState<HealthWarning[]>([]);
   const [adaptedRecipe, setAdaptedRecipe] = useState<InsertRecipe | null>(null);
+  const { createRecipe } = useRecipes();
+  const { toast } = useToast();
 
   const extractRecipe = async (url: string) => {
     setIsExtracting(true);
@@ -134,10 +137,33 @@ export function useRecipeExtraction() {
       setHealthWarnings(warnings);
       setIsAdapting(false);
       
-      return adapted;
+      // Save the adapted recipe
+      try {
+        await createRecipe(adapted);
+        toast({
+          title: "Recipe saved successfully",
+          description: "The recipe has been added to your collection",
+          variant: "default",
+        });
+        return adapted;
+      } catch (error) {
+        console.error('Failed to save recipe:', error);
+        toast({
+          title: "Failed to save recipe",
+          description: error instanceof Error ? error.message : "Please try again",
+          variant: "destructive",
+        });
+        throw error;
+      }
     } catch (error) {
       setIsExtracting(false);
       setIsAdapting(false);
+      console.error('Recipe extraction failed:', error);
+      toast({
+        title: "Failed to extract recipe",
+        description: error instanceof Error ? error.message : "Please try again or enter the recipe manually",
+        variant: "destructive",
+      });
       throw error;
     }
   };
