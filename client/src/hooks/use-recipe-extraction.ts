@@ -3,20 +3,35 @@ import type { InsertRecipe } from "@db/schema";
 
 // Mock recipe extraction function
 async function extractRecipeFromUrl(url: string): Promise<InsertRecipe> {
+  if (!url.startsWith('http')) {
+    throw new Error('Invalid URL format. Please provide a valid URL starting with http:// or https://');
+  }
+
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1500));
 
-  // Return mock data
+  // Return realistic mock data
   return {
-    name: "Extracted Recipe",
-    description: "This is an automatically extracted recipe.",
+    name: "Mediterranean Quinoa Bowl",
+    description: "A nutritious and protein-rich Mediterranean-style quinoa bowl with roasted vegetables, chickpeas, and a lemon tahini dressing.",
     ingredients: [
-      { name: "Ingredient 1", amount: 100, unit: "g" },
-      { name: "Ingredient 2", amount: 200, unit: "ml" }
+      { name: "Quinoa", amount: 200, unit: "g" },
+      { name: "Chickpeas", amount: 400, unit: "g" },
+      { name: "Cherry Tomatoes", amount: 200, unit: "g" },
+      { name: "Cucumber", amount: 1, unit: "piece" },
+      { name: "Red Onion", amount: 1, unit: "piece" },
+      { name: "Feta Cheese", amount: 100, unit: "g" },
+      { name: "Olive Oil", amount: 30, unit: "ml" },
+      { name: "Lemon Juice", amount: 45, unit: "ml" },
+      { name: "Tahini", amount: 30, unit: "g" }
     ],
     instructions: [
-      { stepNumber: 1, content: "Step 1 of the recipe", richText: "" },
-      { stepNumber: 2, content: "Step 2 of the recipe", richText: "" }
+      { stepNumber: 1, content: "Rinse quinoa thoroughly and cook according to package instructions.", richText: "" },
+      { stepNumber: 2, content: "Drain and rinse chickpeas, then roast with olive oil and seasonings at 200°C for 20-25 minutes.", richText: "" },
+      { stepNumber: 3, content: "Chop vegetables: halve cherry tomatoes, dice cucumber, and thinly slice red onion.", richText: "" },
+      { stepNumber: 4, content: "Make dressing by whisking together tahini, lemon juice, olive oil, and seasoning.", richText: "" },
+      { stepNumber: 5, content: "Assemble bowls by layering quinoa, roasted chickpeas, fresh vegetables, and crumbled feta.", richText: "" },
+      { stepNumber: 6, content: "Drizzle with tahini dressing and serve immediately.", richText: "" }
     ],
     nutritionInfo: {
       calories: 450,
