@@ -18,13 +18,48 @@ export function registerRoutes(app: Express) {
     try {
       const result = insertRecipeSchema.safeParse(req.body);
       if (!result.success) {
+        console.error('Recipe validation failed:', result.error.errors);
         return res.status(400).json({ errors: result.error.errors });
       }
 
-      const [newRecipe] = await db.insert(recipes).values(result.data).returning();
+      // Ensure the data structure matches the schema
+      const recipeData = {
+        ...result.data,
+        ingredients: Array.isArray(result.data.ingredients) 
+          ? result.data.ingredients.map(ing => ({
+              name: typeof ing === 'string' ? ing : ing.name,
+              amount: typeof ing === 'string' ? 0 : ing.amount,
+              unit: typeof ing === 'string' ? 'piece' : ing.unit
+            }))
+          : [],
+        instructions: Array.isArray(result.data.instructions)
+          ? result.data.instructions.map((inst, index) => ({
+              stepNumber: typeof inst === 'string' ? index + 1 : inst.stepNumber,
+              content: typeof inst === 'string' ? inst : inst.content,
+              richText: typeof inst === 'string' ? '' : (inst.richText || '')
+            }))
+          : [],
+        nutritionInfo: {
+          calories: Number(result.data.nutritionInfo?.calories || 0),
+          protein: Number(result.data.nutritionInfo?.protein || 0),
+          carbs: Number(result.data.nutritionInfo?.carbs || 0),
+          fat: Number(result.data.nutritionInfo?.fat || 0),
+          vitamins: result.data.nutritionInfo?.vitamins || {},
+          minerals: result.data.nutritionInfo?.minerals || {}
+        },
+        cookTime: Number(result.data.cookTime || 0),
+        totalTime: Number(result.data.totalTime || 0)
+      };
+
+      const [newRecipe] = await db.insert(recipes).values(recipeData).returning();
+      console.log('Recipe created successfully:', newRecipe.id);
       res.status(201).json(newRecipe);
     } catch (error) {
-      res.status(500).send("Failed to create recipe");
+      console.error('Failed to create recipe:', error);
+      res.status(500).json({ 
+        error: 'Failed to create recipe',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
