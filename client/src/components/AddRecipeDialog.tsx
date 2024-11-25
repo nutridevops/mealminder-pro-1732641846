@@ -94,25 +94,28 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="space-y-4">
+            <div className="space-y-4 bg-muted/30 p-6 rounded-lg border">
+              <h3 className="text-lg font-semibold mb-2">Quick Recipe Import</h3>
               <div className="flex gap-4">
                 <FormField
                   control={form.control}
                   name="url"
                   render={({ field }) => (
                     <FormItem className="flex-1">
-                      <FormLabel>Recipe URL</FormLabel>
+                      <FormLabel className="text-base">Recipe URL</FormLabel>
                       <FormControl>
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
                           <Input
                             value={recipeUrl}
                             onChange={(e) => setRecipeUrl(e.target.value)}
-                            placeholder="Paste a recipe URL to extract"
-                            className="flex-1"
+                            placeholder="Paste a recipe URL to automatically extract details"
+                            className="flex-1 h-12 text-base"
                           />
                           <Button
                             type="button"
-                            variant="secondary"
+                            size="lg"
+                            variant="default"
+                            className="min-w-[120px]"
                             onClick={async () => {
                               try {
                                 const recipe = await extractRecipe(recipeUrl);
@@ -132,14 +135,17 @@ export function AddRecipeDialog({ onAdd }: AddRecipeDialogProps) {
                             disabled={isExtracting || !recipeUrl}
                           >
                             {isExtracting ? (
-                              <Timer className="h-4 w-4 animate-spin" />
+                              <Timer className="h-5 w-5 animate-spin mr-2" />
                             ) : (
-                              <Download className="h-4 w-4 mr-2" />
+                              <Download className="h-5 w-5 mr-2" />
                             )}
-                            {isExtracting ? "Extracting..." : "Extract"}
+                            {isExtracting ? "Extracting..." : "Extract Recipe"}
                           </Button>
                         </div>
                       </FormControl>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Paste a URL from any recipe website to automatically extract ingredients, instructions, and nutritional information
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
