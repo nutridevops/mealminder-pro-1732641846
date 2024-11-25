@@ -1,9 +1,12 @@
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Plus } from "lucide-react";
+import { Clock, Plus, LineChart } from "lucide-react";
 import type { Recipe } from "@db/schema";
 import { NutritionDisplay } from "./NutritionDisplay";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { NutritionAnalytics } from "./NutritionAnalytics";
 
 type RecipeCardProps = {
   recipe: Recipe;
@@ -11,6 +14,7 @@ type RecipeCardProps = {
 };
 
 export function RecipeCard({ recipe, onAddToPlan }: RecipeCardProps) {
+  const [showNutritionAnalytics, setShowNutritionAnalytics] = useState(false);
   return (
     <Card className="overflow-hidden">
       <div className="aspect-video relative">
@@ -38,18 +42,35 @@ export function RecipeCard({ recipe, onAddToPlan }: RecipeCardProps) {
         <NutritionDisplay nutrition={recipe.nutritionInfo} />
       </CardContent>
 
-      {onAddToPlan && (
-        <CardFooter>
+      <CardFooter className="flex gap-2">
+        <Button 
+          onClick={() => setShowNutritionAnalytics(true)}
+          className="flex-1"
+          variant="outline"
+        >
+          <LineChart className="h-4 w-4 mr-2" />
+          Nutrition Analysis
+        </Button>
+        {onAddToPlan && (
           <Button 
             onClick={onAddToPlan}
-            className="w-full"
+            className="flex-1"
             variant="outline"
           >
             <Plus className="h-4 w-4 mr-2" />
             Add to Meal Plan
           </Button>
-        </CardFooter>
-      )}
+        )}
+      </CardFooter>
+
+      <Dialog open={showNutritionAnalytics} onOpenChange={setShowNutritionAnalytics}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nutritional Analysis - {recipe.name}</DialogTitle>
+          </DialogHeader>
+          <NutritionAnalytics recipe={recipe} />
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
