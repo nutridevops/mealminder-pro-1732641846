@@ -31,29 +31,43 @@ export function registerRoutes(app: Express) {
       const recipeData = {
         name: result.data.name,
         description: result.data.description,
-        ingredients: (result.data.ingredients ?? []).map(ing => ({
-          name: ing?.name ?? '',
-          amount: Number(ing?.amount ?? 0),
-          unit: ing?.unit ?? 'g'
-        })),
-        instructions: (result.data.instructions ?? []).map((inst, index) => ({
-          stepNumber: inst?.stepNumber ?? index + 1,
-          content: inst?.content ?? '',
-          richText: inst?.richText ?? ''
-        })),
+        ingredients: Array.isArray(result.data.ingredients) 
+          ? result.data.ingredients.map(ing => ({
+              name: String(ing?.name || ''),
+              amount: Number(ing?.amount || 0),
+              unit: String(ing?.unit || 'g')
+            }))
+          : [],
+        instructions: Array.isArray(result.data.instructions)
+          ? result.data.instructions.map((inst, index) => ({
+              stepNumber: Number(inst?.stepNumber || index + 1),
+              content: String(inst?.content || ''),
+              richText: String(inst?.richText || '')
+            }))
+          : [],
         nutritionInfo: {
-          calories: Number(result.data.nutritionInfo?.calories ?? 0),
-          protein: Number(result.data.nutritionInfo?.protein ?? 0),
-          carbs: Number(result.data.nutritionInfo?.carbs ?? 0),
-          fat: Number(result.data.nutritionInfo?.fat ?? 0),
-          vitamins: typeof result.data.nutritionInfo?.vitamins === 'object' ? result.data.nutritionInfo.vitamins : {},
-          minerals: typeof result.data.nutritionInfo?.minerals === 'object' ? result.data.nutritionInfo.minerals : {}
+          calories: Number(result.data.nutritionInfo?.calories || 0),
+          protein: Number(result.data.nutritionInfo?.protein || 0),
+          carbs: Number(result.data.nutritionInfo?.carbs || 0),
+          fat: Number(result.data.nutritionInfo?.fat || 0),
+          vitamins: result.data.nutritionInfo && typeof result.data.nutritionInfo === 'object' && result.data.nutritionInfo.vitamins
+            ? Object.fromEntries(
+                Object.entries(result.data.nutritionInfo.vitamins)
+                  .map(([k, v]) => [k, Number(v)])
+              )
+            : {},
+          minerals: result.data.nutritionInfo && typeof result.data.nutritionInfo === 'object' && result.data.nutritionInfo.minerals
+            ? Object.fromEntries(
+                Object.entries(result.data.nutritionInfo.minerals)
+                  .map(([k, v]) => [k, Number(v)])
+              )
+            : {}
         },
-        prepTime: Number(result.data.prepTime),
-        cookTime: Number(result.data.cookTime),
-        totalTime: Number(result.data.totalTime),
-        imageUrl: result.data.imageUrl,
-        userId: result.data.userId
+        prepTime: Number(result.data.prepTime || 0),
+        cookTime: Number(result.data.cookTime || 0),
+        totalTime: Number(result.data.totalTime || 0),
+        imageUrl: result.data.imageUrl || null,
+        userId: result.data.userId || null
       };
 
       console.log('Transformed recipe data:', JSON.stringify(recipeData, null, 2));
