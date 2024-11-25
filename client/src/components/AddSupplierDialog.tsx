@@ -23,25 +23,25 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const { toast } = useToast();
   
   const websiteUrlSchema = z.string()
+    .transform(url => {
+      if (!url) return null;
+      // Remove any HTML content and trim
+      url = url.replace(/<[^>]*>/g, '').trim();
+      // Remove www. if present
+      url = url.replace(/^www\./i, '');
+      // Add https:// if no protocol
+      return url.match(/^https?:\/\//i) ? url : `https://${url}`;
+    })
     .refine(url => {
       if (!url) return true;
       try {
-        // Add https:// if missing
-        const urlToTest = url.match(/^https?:\/\//i) ? url : `https://${url}`;
-        new URL(urlToTest);
+        new URL(url);
         return true;
       } catch {
         return false;
       }
     }, "Please enter a valid website URL")
-    .optional()
-    .transform(url => {
-      if (!url) return "";
-      // Add https:// if missing and remove www.
-      return url.match(/^https?:\/\//i) ? 
-        url.replace(/^www\./i, '') : 
-        `https://${url.replace(/^www\./i, '')}`;
-    });
+    .nullable();
 
   const supplierFormSchema = insertSupplierSchema.extend({
     website: websiteUrlSchema,
@@ -74,10 +74,9 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   async function onSubmit(values: z.infer<typeof supplierFormSchema>) {
     setIsSubmitting(true);
     try {
-      // Sanitize website URL
       const sanitizedValues = {
         ...values,
-        website: values.website || undefined
+        website: values.website ? websiteUrlSchema.parse(values.website) : null
       };
       
       const supplier = await onAdd(sanitizedValues);
