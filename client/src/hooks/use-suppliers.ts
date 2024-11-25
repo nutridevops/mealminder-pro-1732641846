@@ -22,32 +22,16 @@ async function createSupplier(supplier: InsertSupplier): Promise<Supplier> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
     },
     body: JSON.stringify(supplier),
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    // Handle specific error responses
-    if (response.status === 400) {
-      throw new Error(
-        data.validation_errors
-          ? `Validation failed: ${data.validation_errors.map((err: any) => `${err.path}: ${err.message}`).join(', ')}`
-          : data.message || 'Invalid supplier data'
-      );
-    }
-    if (response.status === 409) {
-      throw new Error(data.message || 'Supplier already exists');
-    }
-    if (response.status === 415) {
-      throw new Error('Invalid content type');
-    }
-    throw new Error(data.message || 'Failed to create supplier');
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to create supplier');
   }
 
-  return data;
+  return response.json();
 }
 
 export function useSuppliers() {

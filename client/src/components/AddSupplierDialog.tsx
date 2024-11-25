@@ -22,16 +22,19 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [createdSupplier, setCreatedSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
   
-  const websiteUrlSchema = z.string()
-    .transform(url => {
+  const websiteSchema = z.string()
+    .trim()
+    .toLowerCase()
+    .transform((url) => {
       if (!url) return null;
-      // Clean the URL
-      url = url.trim();
+      // Remove any HTML characters
+      url = url.replace(/<[^>]*>/g, '');
+      // Remove www if present
       url = url.replace(/^www\./i, '');
-      // Add https:// if needed
+      // Add https if missing
       return url.match(/^https?:\/\//i) ? url : `https://${url}`;
     })
-    .refine(url => {
+    .refine((url) => {
       if (!url) return true;
       try {
         new URL(url);
