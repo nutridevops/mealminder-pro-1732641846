@@ -1,0 +1,47 @@
+{
+  "common": {
+    "add": "添加",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功"
+  },
+  "recipe": {
+    "title": "食谱",
+    "name": "食谱名称",
+    "description": "描述",
+    "ingredients": "配料",
+    "instructions": "烹饪步骤",
+    "prepTime": "准备时间",
+    "cookTime": "烹饪时间",
+    "totalTime": "总时间",
+    "minutes": "分钟",
+    "addRecipe": "添加新食谱",
+    "importRecipe": "导入食谱",
+    "nutritionInfo": "营养信息"
+  },
+  "nutrition": {
+    "calories": "热量",
+    "protein": "蛋白质",
+    "carbs": "碳水化合物",
+    "fat": "脂肪",
+    "vitamins": "维生素",
+    "minerals": "矿物质",
+    "keyNutrients": "主要营养素",
+    "showMore": "显示所有营养素",
+    "showLess": "显示更少",
+    "nutritionalAnalysis": "营养分析"
+  },
+  "supplier": {
+    "title": "供应商",
+    "name": "供应商名称",
+    "description": "描述",
+    "website": "网站",
+    "addSupplier": "添加新供应商",
+    "active": "活跃",
+    "inactive": "不活跃"
+  }
+}

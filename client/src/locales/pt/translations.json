@@ -1,0 +1,47 @@
+{
+  "common": {
+    "add": "Adicionar",
+    "edit": "Editar",
+    "delete": "Excluir",
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "loading": "Carregando...",
+    "error": "Erro",
+    "success": "Sucesso"
+  },
+  "recipe": {
+    "title": "Receita",
+    "name": "Nome da Receita",
+    "description": "Descrição",
+    "ingredients": "Ingredientes",
+    "instructions": "Instruções",
+    "prepTime": "Tempo de Preparo",
+    "cookTime": "Tempo de Cozimento",
+    "totalTime": "Tempo Total",
+    "minutes": "minutos",
+    "addRecipe": "Adicionar Nova Receita",
+    "importRecipe": "Importar Receita",
+    "nutritionInfo": "Informação Nutricional"
+  },
+  "nutrition": {
+    "calories": "Calorias",
+    "protein": "Proteína",
+    "carbs": "Carboidratos",
+    "fat": "Gordura",
+    "vitamins": "Vitaminas",
+    "minerals": "Minerais",
+    "keyNutrients": "Nutrientes Principais",
+    "showMore": "Mostrar Todos os Nutrientes",
+    "showLess": "Mostrar Menos",
+    "nutritionalAnalysis": "Análise Nutricional"
+  },
+  "supplier": {
+    "title": "Fornecedor",
+    "name": "Nome do Fornecedor",
+    "description": "Descrição",
+    "website": "Site",
+    "addSupplier": "Adicionar Novo Fornecedor",
+    "active": "Ativo",
+    "inactive": "Inativo"
+  }
+}
