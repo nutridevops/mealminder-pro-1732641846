@@ -284,11 +284,14 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    
     try {
       const result = insertSupplierSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
           error: "Invalid supplier data",
+          message: "Validation failed",
           details: result.error.format()
         });
       }

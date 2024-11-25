@@ -18,25 +18,32 @@ async function fetchSupplierProducts(supplierId: number): Promise<Product[]> {
 }
 
 async function createSupplier(supplier: InsertSupplier): Promise<Supplier> {
-  const response = await fetch('/api/suppliers', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name: supplier.name,
-      description: supplier.description,
-      website: supplier.website,
-      active: supplier.active ?? true
-    }),
-  });
+  try {
+    const response = await fetch('/api/suppliers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        name: supplier.name.trim(),
+        description: supplier.description.trim(),
+        website: supplier.website,
+        active: true
+      })
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Failed to create supplier');
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to create supplier');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Supplier creation error:', error);
+    throw error;
   }
-
-  return response.json();
 }
 
 export function useSuppliers() {
