@@ -219,7 +219,10 @@ export function registerRoutes(app: Express) {
       // Insert supplier with validated data
       const [newSupplier] = await db
         .insert(suppliers)
-        .values(supplierData)
+        .values([{
+          ...supplierData,
+          location: JSON.stringify(supplierData.location)
+        }])
         .returning();
 
       if (!newSupplier) {
