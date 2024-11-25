@@ -20,9 +20,10 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add error handling middleware before routes
+// Add error handling middleware
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Server error:', err);
+  res.setHeader('Content-Type', 'application/json');
   res.status(500).json({
     error: "Server error",
     message: err.message || "An unexpected error occurred"

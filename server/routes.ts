@@ -284,7 +284,7 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
-    // Set JSON content type
+    // Ensure JSON response
     res.setHeader('Content-Type', 'application/json');
     
     try {
@@ -300,20 +300,17 @@ export function registerRoutes(app: Express) {
         name: req.body.name?.trim(),
         description: req.body.description?.trim(),
         website: req.body.website,
-        active: true
+        active: true,
+        specialties: [],
+        searchTags: [],
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalCommission: 0
       };
-
-      const result = insertSupplierSchema.safeParse(payload);
-      if (!result.success) {
-        return res.status(400).json({
-          error: "Validation failed",
-          details: result.error.format()
-        });
-      }
 
       const [newSupplier] = await db
         .insert(suppliers)
-        .values(result.data)
+        .values([payload]) // Note: values() expects an array
         .returning();
 
       return res.status(201).json(newSupplier);
