@@ -55,11 +55,18 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ errors: result.error.errors });
       }
 
-      // Ensure recipes object has the correct structure
+      // Type assert and ensure recipes object has the correct structure
+      const inputRecipes = result.data.recipes as {
+        breakfast?: number | null;
+        lunch?: number | null;
+        dinner?: number | null;
+      };
+
+      // Build recipes object with proper null checking
       const recipes = {
-        breakfast: result.data.recipes.breakfast ?? null,
-        lunch: result.data.recipes.lunch ?? null,
-        dinner: result.data.recipes.dinner ?? null
+        breakfast: inputRecipes?.breakfast ?? null,
+        lunch: inputRecipes?.lunch ?? null,
+        dinner: inputRecipes?.dinner ?? null
       };
 
       const [newMealPlan] = await db.insert(mealPlans).values({
