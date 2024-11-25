@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, json, date } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, json, date, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -59,12 +59,57 @@ export const mealPlans = pgTable("meal_plans", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const suppliers = pgTable("suppliers", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  website: text("website").notNull(),
+  apiKey: text("api_key"),
+  active: boolean("active").default(true),
+  location: json("location").$type<{
+    latitude: number;
+    longitude: number;
+    address: string;
+  }>().notNull(),
+  deliveryRadius: integer("delivery_radius").notNull(), // in kilometers
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const products = pgTable("products", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  supplierId: integer("supplier_id").references(() => suppliers.id),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  price: integer("price").notNull(), // in cents
+  unit: text("unit").notNull(),
+  inStock: boolean("in_stock").default(true),
+  category: text("category").notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const shoppingLists = pgTable("shopping_lists", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: integer("user_id").references(() => users.id),
-  items: json("items").$type<string[]>().notNull(),
+  items: json("items").$type<{
+    productId: number;
+    quantity: number;
+    supplierId: number;
+  }[]>().notNull(),
+  status: text("status").notNull().default('draft'),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Add Zod schemas for new tables
+export const insertSupplierSchema = createInsertSchema(suppliers);
+export const selectSupplierSchema = createSelectSchema(suppliers);
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type Supplier = z.infer<typeof selectSupplierSchema>;
+
+export const insertProductSchema = createInsertSchema(products);
+export const selectProductSchema = createSelectSchema(products);
+export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Product = z.infer<typeof selectProductSchema>;
 
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);

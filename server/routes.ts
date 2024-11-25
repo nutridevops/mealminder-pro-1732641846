@@ -1,6 +1,15 @@
 import type { Express } from "express";
 import { db } from "../db";
-import { recipes, mealPlans, insertRecipeSchema, insertMealPlanSchema } from "@db/schema";
+import { 
+  recipes, 
+  mealPlans, 
+  suppliers,
+  products,
+  insertRecipeSchema, 
+  insertMealPlanSchema,
+  insertSupplierSchema,
+  insertProductSchema
+} from "@db/schema";
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express) {
@@ -147,6 +156,71 @@ export function registerRoutes(app: Express) {
         .returning();
       
       if (!updatedMealPlan) {
+  // Supplier routes
+  app.get("/api/suppliers", async (req, res) => {
+    try {
+      const allSuppliers = await db.select().from(suppliers);
+      res.json(allSuppliers);
+    } catch (error) {
+      console.error('Failed to fetch suppliers:', error);
+      res.status(500).send("Failed to fetch suppliers");
+    }
+  });
+
+  app.post("/api/suppliers", async (req, res) => {
+    try {
+      const result = insertSupplierSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ errors: result.error.errors });
+      }
+
+      const [newSupplier] = await db.insert(suppliers).values(result.data).returning();
+      res.status(201).json(newSupplier);
+    } catch (error) {
+      console.error('Failed to create supplier:', error);
+      res.status(500).send("Failed to create supplier");
+    }
+  });
+
+  // Product routes
+  app.get("/api/products", async (req, res) => {
+    try {
+      const allProducts = await db.select().from(products);
+      res.json(allProducts);
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+      res.status(500).send("Failed to fetch products");
+    }
+  });
+
+  app.get("/api/suppliers/:supplierId/products", async (req, res) => {
+    try {
+      const supplierId = parseInt(req.params.supplierId);
+      const supplierProducts = await db
+        .select()
+        .from(products)
+        .where(eq(products.supplierId, supplierId));
+      res.json(supplierProducts);
+    } catch (error) {
+      console.error('Failed to fetch supplier products:', error);
+      res.status(500).send("Failed to fetch supplier products");
+    }
+  });
+
+  app.post("/api/products", async (req, res) => {
+    try {
+      const result = insertProductSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ errors: result.error.errors });
+      }
+
+      const [newProduct] = await db.insert(products).values(result.data).returning();
+      res.status(201).json(newProduct);
+    } catch (error) {
+      console.error('Failed to create product:', error);
+      res.status(500).send("Failed to create product");
+    }
+  });
         return res.status(404).send("Meal plan not found");
       }
 

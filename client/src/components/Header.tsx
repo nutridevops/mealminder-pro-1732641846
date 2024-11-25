@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { 
   CalendarDays, 
   ChefHat, 
-  Home 
+  Home,
+  Store
 } from "lucide-react";
 
 export default function Header() {
@@ -46,6 +47,16 @@ export default function Header() {
               <Link href="/planner" className="flex items-center gap-2">
                 <CalendarDays className="h-4 w-4" />
                 Meal Planner
+              </Link>
+            </Button>
+
+            <Button
+              variant={location === "/suppliers" ? "default" : "ghost"}
+              asChild
+            >
+              <Link href="/suppliers" className="flex items-center gap-2">
+                <Store className="h-4 w-4" />
+                Suppliers
               </Link>
             </Button>
           </div>
