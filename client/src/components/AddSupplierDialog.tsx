@@ -23,26 +23,25 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const { toast } = useToast();
   
   const websiteUrlSchema = z.string()
-    .transform(url => {
-      if (!url) return null;
-      // Remove any HTML-like content
-      url = url.replace(/<[^>]*>/g, '').trim();
-      // Add https:// if no protocol is specified
-      if (!url.match(/^https?:\/\//i)) {
-        return `https://${url.replace(/^www\./i, '')}`;
-      }
-      return url;
-    })
     .refine(url => {
       if (!url) return true;
       try {
-        new URL(url);
+        // Add https:// if missing
+        const urlToTest = url.match(/^https?:\/\//i) ? url : `https://${url}`;
+        new URL(urlToTest);
         return true;
       } catch {
         return false;
       }
-    }, "Please enter a valid URL")
-    .nullable();
+    }, "Please enter a valid website URL")
+    .optional()
+    .transform(url => {
+      if (!url) return "";
+      // Add https:// if missing and remove www.
+      return url.match(/^https?:\/\//i) ? 
+        url.replace(/^www\./i, '') : 
+        `https://${url.replace(/^www\./i, '')}`;
+    });
 
   const supplierFormSchema = insertSupplierSchema.extend({
     website: websiteUrlSchema,
@@ -78,7 +77,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       // Sanitize website URL
       const sanitizedValues = {
         ...values,
-        website: values.website ? values.website.trim() : null
+        website: values.website || undefined
       };
       
       const supplier = await onAdd(sanitizedValues);
