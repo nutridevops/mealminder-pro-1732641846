@@ -173,33 +173,31 @@ export function registerRoutes(app: Express) {
       if (!result.success) {
         return res.status(400).json({ 
           error: "Invalid supplier data",
-          details: result.error.errors 
+          validation_errors: result.error.errors.map(err => ({
+            path: err.path.join('.'),
+            message: err.message
+          }))
         });
       }
 
-      // Ensure location data is properly structured
-      const supplierData = {
-        ...result.data,
-        location: {
-          latitude: result.data.location.latitude,
-          longitude: result.data.location.longitude,
-          address: result.data.location.address
-        }
-      };
+      // Validate location data
+      const { location } = result.data;
+      if (!location || 
+          typeof location.latitude !== 'number' || 
+          typeof location.longitude !== 'number' ||
+          typeof location.address !== 'string' ||
+          !location.address.trim()) {
+        return res.status(400).json({
+          error: "Invalid location data",
+          details: "Location must include valid latitude, longitude, and address"
+        });
+      }
 
+      // Insert supplier with validated data
       const [newSupplier] = await db
         .insert(suppliers)
-        .values(supplierData)
-        .returning({
-          id: suppliers.id,
-          name: suppliers.name,
-          description: suppliers.description,
-          website: suppliers.website,
-          location: suppliers.location,
-          deliveryRadius: suppliers.deliveryRadius,
-          active: suppliers.active,
-          createdAt: suppliers.createdAt
-        });
+        .values(result.data)
+        .returning();
 
       if (!newSupplier) {
         throw new Error("Failed to create supplier record");
@@ -208,6 +206,17 @@ export function registerRoutes(app: Express) {
       res.status(201).json(newSupplier);
     } catch (error) {
       console.error('Failed to create supplier:', error);
+      
+      // Handle specific database errors
+      if (error instanceof Error) {
+        if (error.message.includes('duplicate key')) {
+          return res.status(409).json({
+            error: "Supplier already exists",
+            message: "A supplier with this name already exists"
+          });
+        }
+      }
+
       res.status(500).json({
         error: "Failed to create supplier",
         message: error instanceof Error ? error.message : "An unexpected error occurred"

@@ -15,6 +15,7 @@ type AddSupplierDialogProps = {
 
 export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   
   const form = useForm<InsertSupplier>({
@@ -32,23 +33,29 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       active: true,
       integrationSettings: null,
       specialties: []
-    } as InsertSupplier
+    }
   });
 
   async function onSubmit(data: InsertSupplier) {
+    setIsSubmitting(true);
     try {
       await onAdd(data);
       setOpen(false);
       form.reset();
       toast({
         title: "Supplier added successfully",
+        description: "The supplier has been added to your network",
         variant: "default"
       });
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Please try again";
       toast({
         title: "Failed to add supplier",
+        description: errorMessage,
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
