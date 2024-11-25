@@ -22,8 +22,26 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [createdSupplier, setCreatedSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
   
+  const websiteUrlSchema = z.string()
+    .transform(url => {
+      if (!url) return '';
+      if (!url.match(/^https?:\/\//)) {
+        return `https://${url.replace(/^www\./, '')}`;
+      }
+      return url;
+    })
+    .refine(url => {
+      if (!url) return true;
+      try {
+        new URL(url);
+        return true;
+      } catch {
+        return false;
+      }
+    }, "Please enter a valid URL");
+
   const supplierFormSchema = insertSupplierSchema.extend({
-    website: z.string().url("Please enter a valid URL").or(z.string().length(0)),
+    website: websiteUrlSchema,
   });
 
   const form = useForm<z.infer<typeof supplierFormSchema>>({
