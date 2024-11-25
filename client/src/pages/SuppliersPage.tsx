@@ -64,13 +64,17 @@ export default function SuppliersPage() {
                   <p className="text-sm text-muted-foreground">
                     {supplier.description}
                   </p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{(supplier.location as { address: string })?.address || 'No address provided'}</span>
-                  </div>
+                  {supplier.website && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Store className="h-4 w-4" />
+                      <a href={supplier.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        Visit Website
+                      </a>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Truck className="h-4 w-4" />
-                    <span>Delivers within {supplier.deliveryRadius}km</span>
+                    <span>{supplier.totalOrders} Orders • ${(supplier.totalRevenue / 100).toFixed(2)} Revenue</span>
                   </div>
                 </CardContent>
               </Card>

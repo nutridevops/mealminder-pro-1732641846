@@ -308,10 +308,20 @@ export function registerRoutes(app: Express) {
         });
       }
 
-      // Insert supplier with validated data
+      // Insert supplier with validated data and handle optional fields
       const [newSupplier] = await db
         .insert(suppliers)
-        .values(result.data)
+        .values([{
+          name: result.data.name,
+          description: result.data.description,
+          website: result.data.website,
+          active: result.data.active ?? true,
+          specialties: result.data.specialties ?? [],
+          searchTags: result.data.searchTags ?? [],
+          oauthProvider: result.data.oauthProvider,
+          oauthId: result.data.oauthId,
+          oauthTokens: result.data.oauthTokens ?? null
+        }])
         .returning();
 
       if (!newSupplier) {

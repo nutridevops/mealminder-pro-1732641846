@@ -22,6 +22,8 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [createdSupplier, setCreatedSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
   
+  const websiteSchema = z.string().url("Please enter a valid URL").or(z.string().length(0));
+  
   const form = useForm<z.infer<typeof insertSupplierSchema>>({
     resolver: zodResolver(insertSupplierSchema),
     defaultValues: {
@@ -31,11 +33,20 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       active: true,
       specialties: [],
       searchTags: [],
-      oauthProvider: undefined,
-      oauthId: undefined,
-      oauthTokens: undefined
+      totalOrders: 0,
+      totalRevenue: 0,
+      totalCommission: 0,
     }
   });
+
+  const validateWebsite = (value: string) => {
+    try {
+      websiteSchema.parse(value);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof insertSupplierSchema>) {
     setIsSubmitting(true);

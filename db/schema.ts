@@ -59,23 +59,30 @@ export const mealPlans = pgTable("meal_plans", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Define OAuth token type
+const oauthTokenSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  expiresAt: z.number(),
+  scope: z.string().optional(),
+  tokenType: z.string().optional()
+}).nullable();
+
 export const suppliers = pgTable("suppliers", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  website: text("website").notNull(),
+  website: text("website"),
   active: boolean("active").default(true),
   affiliateCode: text("affiliate_code").unique(),
   commissionRate: integer("commission_rate").default(10), // percentage
+  totalOrders: integer("total_orders").default(0),
+  totalRevenue: integer("total_revenue").default(0), // in cents
+  totalCommission: integer("total_commission").default(0), // in cents
+  lastOrderAt: timestamp("last_order_at"),
   oauthProvider: text("oauth_provider"), // 'google', 'microsoft', etc.
   oauthId: text("oauth_id"), // unique ID from the OAuth provider
-  oauthTokens: json("oauth_tokens").$type<{
-    accessToken: string;
-    refreshToken: string;
-    expiresAt: number;
-    scope?: string;
-    tokenType?: string;
-  } | null>().default(null),
+  oauthTokens: json("oauth_tokens").$type<z.infer<typeof oauthTokenSchema>>().default(null),
   isAuthenticated: boolean("is_authenticated").default(false),
   searchTags: json("search_tags").$type<string[]>().default([]),
   specialties: json("specialties").$type<string[]>().default([]),
