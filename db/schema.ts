@@ -64,22 +64,17 @@ export const suppliers = pgTable("suppliers", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   website: text("website").notNull(),
-  apiKey: text("api_key"),
   active: boolean("active").default(true),
-  location: json("location").$type<{
-    latitude: number;
-    longitude: number;
-    address: string;
-  }>().notNull(),
-  deliveryRadius: integer("delivery_radius").notNull(), // in kilometers
   affiliateCode: text("affiliate_code").unique(),
   commissionRate: integer("commission_rate").default(10), // percentage
-  apiConfig: json("api_config").$type<{
-    endpoint: string;
-    authType: 'bearer' | 'basic' | 'apikey';
-    credentials: Record<string, string>;
-    webhookUrl?: string;
+  oauthProvider: text("oauth_provider"), // 'google', 'microsoft', etc.
+  oauthId: text("oauth_id"), // unique ID from the OAuth provider
+  oauthTokens: json("oauth_tokens").$type<{
+    accessToken: string;
+    refreshToken: string;
+    expiresAt: number;
   }>(),
+  searchTags: json("search_tags").$type<string[]>().default([]),
   specialties: json("specialties").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });

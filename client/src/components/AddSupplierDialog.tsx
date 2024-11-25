@@ -17,6 +17,7 @@ type AddSupplierDialogProps = {
 export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [open, setOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOAuthLoading, setIsOAuthLoading] = useState(false);
   const { toast } = useToast();
   
   const form = useForm<z.infer<typeof insertSupplierSchema>>({
@@ -25,19 +26,39 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       name: "",
       description: "",
       website: "",
-      location: {
-        latitude: 0,
-        longitude: 0,
-        address: ""
-      },
-      deliveryRadius: 10,
       active: true,
       specialties: [],
-      apiConfig: null,
-      apiKey: null,
-      integrationSettings: null
+      searchTags: [],
+      oauthProvider: undefined,
+      oauthId: undefined,
+      oauthTokens: undefined
     }
   });
+
+  const handleOAuthLogin = async (provider: string) => {
+    setIsOAuthLoading(true);
+    try {
+      // OAuth login logic will be implemented here
+      const response = await fetch(`/api/auth/${provider}`);
+      if (!response.ok) {
+        throw new Error(`Failed to authenticate with ${provider}`);
+      }
+      // Handle successful OAuth login
+      toast({
+        title: "Authentication Successful",
+        description: `Successfully authenticated with ${provider}`,
+        variant: "default"
+      });
+    } catch (error) {
+      toast({
+        title: "Authentication Failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setIsOAuthLoading(false);
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof insertSupplierSchema>) {
     setIsSubmitting(true);
@@ -119,63 +140,49 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="location.address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex gap-4">
-              <FormField
-                control={form.control}
-                name="location.latitude"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Latitude</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" step="any" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="location.longitude"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel>Longitude</FormLabel>
-                    <FormControl>
-                      <Input {...field} type="number" step="any" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-4">
+              <div className="text-sm font-medium">Connect with Provider</div>
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleOAuthLogin('google')}
+                  disabled={isOAuthLoading}
+                >
+                  {isOAuthLoading ? (
+                    <div className="animate-spin mr-2">⭮</div>
+                  ) : (
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path
+                        fill="currentColor"
+                        d="M12.545,12.151L12.545,12.151c0,1.054,0.855,1.909,1.909,1.909h3.536c-0.607,2.667-3.074,4.664-5.99,4.664c-3.314,0-6-2.686-6-6s2.686-6,6-6c1.503,0,2.875,0.555,3.926,1.468l2.828-2.828C17.949,3.968,15.701,3,13,3C7.477,3,3,7.477,3,13s4.477,10,10,10c5.523,0,10-4.477,10-10v-1.909h-9.455C12.69,11.091,12.545,11.594,12.545,12.151z"
+                      />
+                    </svg>
+                  )}
+                  Continue with Google
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleOAuthLogin('microsoft')}
+                  disabled={isOAuthLoading}
+                >
+                  {isOAuthLoading ? (
+                    <div className="animate-spin mr-2">⭮</div>
+                  ) : (
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                      <path
+                        fill="currentColor"
+                        d="M11.5 2v9.5H2V2h9.5zm0 10.5V22H2v-9.5h9.5zM22 2v9.5h-9.5V2H22zm0 10.5V22h-9.5v-9.5H22z"
+                      />
+                    </svg>
+                  )}
+                  Continue with Microsoft
+                </Button>
+              </div>
             </div>
-            
-            <FormField
-              control={form.control}
-              name="deliveryRadius"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Delivery Radius (km)</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="number" onChange={e => field.onChange(parseInt(e.target.value))} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <Button type="submit" className="w-full">
               Add Supplier

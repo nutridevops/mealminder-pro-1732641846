@@ -13,6 +13,48 @@ import {
 import { eq } from "drizzle-orm";
 
 export function registerRoutes(app: Express) {
+  // OAuth routes
+  app.get("/api/auth/:provider", async (req, res) => {
+    const { provider } = req.params;
+    
+    try {
+      // Initialize OAuth flow based on provider
+      // This is a placeholder - actual implementation would use proper OAuth libraries
+      res.json({ 
+        status: "success",
+        message: `OAuth flow initiated for ${provider}`,
+        authUrl: `/api/auth/${provider}/callback`
+      });
+    } catch (error) {
+      console.error(`OAuth error with ${provider}:`, error);
+      res.status(500).json({ 
+        error: "Authentication failed",
+        message: error instanceof Error ? error.message : "Failed to authenticate"
+      });
+    }
+  });
+
+  app.get("/api/auth/:provider/callback", async (req, res) => {
+    const { provider } = req.params;
+    const { code } = req.query;
+
+    try {
+      // Handle OAuth callback
+      // This is a placeholder - actual implementation would validate tokens
+      res.json({
+        status: "success",
+        message: `Successfully authenticated with ${provider}`,
+        code
+      });
+    } catch (error) {
+      console.error(`OAuth callback error with ${provider}:`, error);
+      res.status(500).json({
+        error: "Authentication failed",
+        message: error instanceof Error ? error.message : "Failed to complete authentication"
+      });
+    }
+  });
+
   // Recipe routes
   app.get("/api/recipes", async (req, res) => {
     try {
@@ -192,37 +234,10 @@ export function registerRoutes(app: Express) {
         });
       }
 
-      // Extract and validate location data
-      const { location, ...rest } = result.data;
-      const locationData = {
-        latitude: Number(location.latitude),
-        longitude: Number(location.longitude),
-        address: location.address.trim()
-      };
-
-      if (isNaN(locationData.latitude) || isNaN(locationData.longitude) || !locationData.address) {
-        console.error('Invalid location data:', locationData);
-        return res.status(400).json({
-          error: "Invalid location data",
-          details: "Location must include valid latitude, longitude, and address"
-        });
-      }
-
-      // Prepare supplier data with validated location
-      const supplierData = {
-        ...rest,
-        location: locationData
-      };
-
-      console.log('Validated supplier data:', JSON.stringify(supplierData, null, 2));
-
       // Insert supplier with validated data
       const [newSupplier] = await db
         .insert(suppliers)
-        .values({
-          ...supplierData,
-          location: supplierData.location
-        })
+        .values(result.data)
         .returning();
 
       if (!newSupplier) {
