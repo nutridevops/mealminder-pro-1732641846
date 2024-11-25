@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Store, Truck } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AddSupplierDialog } from "@/components/AddSupplierDialog";
 
 export default function SuppliersPage() {
-  const { suppliers, isLoading } = useSuppliers();
+  const { suppliers, isLoading, createSupplier } = useSuppliers();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredSuppliers = suppliers.filter(supplier =>

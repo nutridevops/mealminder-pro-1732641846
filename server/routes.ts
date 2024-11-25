@@ -171,14 +171,47 @@ export function registerRoutes(app: Express) {
     try {
       const result = insertSupplierSchema.safeParse(req.body);
       if (!result.success) {
-        return res.status(400).json({ errors: result.error.errors });
+        return res.status(400).json({ 
+          error: "Invalid supplier data",
+          details: result.error.errors 
+        });
       }
 
-      const [newSupplier] = await db.insert(suppliers).values(result.data).returning();
+      // Ensure location data is properly structured
+      const supplierData = {
+        ...result.data,
+        location: {
+          latitude: result.data.location.latitude,
+          longitude: result.data.location.longitude,
+          address: result.data.location.address
+        }
+      };
+
+      const [newSupplier] = await db
+        .insert(suppliers)
+        .values(supplierData)
+        .returning({
+          id: suppliers.id,
+          name: suppliers.name,
+          description: suppliers.description,
+          website: suppliers.website,
+          location: suppliers.location,
+          deliveryRadius: suppliers.deliveryRadius,
+          active: suppliers.active,
+          createdAt: suppliers.createdAt
+        });
+
+      if (!newSupplier) {
+        throw new Error("Failed to create supplier record");
+      }
+
       res.status(201).json(newSupplier);
     } catch (error) {
       console.error('Failed to create supplier:', error);
-      res.status(500).send("Failed to create supplier");
+      res.status(500).json({
+        error: "Failed to create supplier",
+        message: error instanceof Error ? error.message : "An unexpected error occurred"
+      });
     }
   });
 
