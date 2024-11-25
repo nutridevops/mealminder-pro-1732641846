@@ -20,8 +20,8 @@ const nutritionSchema = z.object({
   protein: z.number(),
   carbs: z.number(),
   fat: z.number(),
-  vitamins: z.record(z.number()).optional(),
-  minerals: z.record(z.number()).optional()
+  vitamins: z.record(z.number()).optional().nullable(),
+  minerals: z.record(z.number()).optional().nullable()
 });
 
 export const users = pgTable("users", {
