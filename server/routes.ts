@@ -16,40 +16,47 @@ export function registerRoutes(app: Express) {
 
   app.post("/api/recipes", async (req, res) => {
     try {
+      console.log('Received recipe data:', JSON.stringify(req.body, null, 2));
+      
       const result = insertRecipeSchema.safeParse(req.body);
       if (!result.success) {
         console.error('Recipe validation failed:', result.error.errors);
-        return res.status(400).json({ errors: result.error.errors });
+        return res.status(400).json({ 
+          message: 'Invalid recipe data',
+          errors: result.error.errors 
+        });
       }
 
-      // Ensure the data structure matches the schema
+      // Transform and validate the data
       const recipeData = {
-        ...result.data,
-        ingredients: Array.isArray(result.data.ingredients) 
-          ? result.data.ingredients.map(ing => ({
-              name: typeof ing === 'string' ? ing : ing.name,
-              amount: typeof ing === 'string' ? 0 : ing.amount,
-              unit: typeof ing === 'string' ? 'piece' : ing.unit
-            }))
-          : [],
-        instructions: Array.isArray(result.data.instructions)
-          ? result.data.instructions.map((inst, index) => ({
-              stepNumber: typeof inst === 'string' ? index + 1 : inst.stepNumber,
-              content: typeof inst === 'string' ? inst : inst.content,
-              richText: typeof inst === 'string' ? '' : (inst.richText || '')
-            }))
-          : [],
+        name: result.data.name,
+        description: result.data.description,
+        ingredients: (result.data.ingredients ?? []).map(ing => ({
+          name: ing?.name ?? '',
+          amount: Number(ing?.amount ?? 0),
+          unit: ing?.unit ?? 'g'
+        })),
+        instructions: (result.data.instructions ?? []).map((inst, index) => ({
+          stepNumber: inst?.stepNumber ?? index + 1,
+          content: inst?.content ?? '',
+          richText: inst?.richText ?? ''
+        })),
         nutritionInfo: {
-          calories: Number(result.data.nutritionInfo?.calories || 0),
-          protein: Number(result.data.nutritionInfo?.protein || 0),
-          carbs: Number(result.data.nutritionInfo?.carbs || 0),
-          fat: Number(result.data.nutritionInfo?.fat || 0),
-          vitamins: result.data.nutritionInfo?.vitamins || {},
-          minerals: result.data.nutritionInfo?.minerals || {}
+          calories: Number(result.data.nutritionInfo?.calories ?? 0),
+          protein: Number(result.data.nutritionInfo?.protein ?? 0),
+          carbs: Number(result.data.nutritionInfo?.carbs ?? 0),
+          fat: Number(result.data.nutritionInfo?.fat ?? 0),
+          vitamins: typeof result.data.nutritionInfo?.vitamins === 'object' ? result.data.nutritionInfo.vitamins : {},
+          minerals: typeof result.data.nutritionInfo?.minerals === 'object' ? result.data.nutritionInfo.minerals : {}
         },
-        cookTime: Number(result.data.cookTime || 0),
-        totalTime: Number(result.data.totalTime || 0)
+        prepTime: Number(result.data.prepTime),
+        cookTime: Number(result.data.cookTime),
+        totalTime: Number(result.data.totalTime),
+        imageUrl: result.data.imageUrl,
+        userId: result.data.userId
       };
+
+      console.log('Transformed recipe data:', JSON.stringify(recipeData, null, 2));
 
       const [newRecipe] = await db.insert(recipes).values(recipeData).returning();
       console.log('Recipe created successfully:', newRecipe.id);

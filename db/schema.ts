@@ -2,6 +2,28 @@ import { pgTable, text, integer, timestamp, json, date } from "drizzle-orm/pg-co
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Define Zod schemas for complex types
+const ingredientSchema = z.object({
+  name: z.string(),
+  amount: z.number(),
+  unit: z.string()
+});
+
+const instructionSchema = z.object({
+  stepNumber: z.number(),
+  content: z.string(),
+  richText: z.string().optional()
+});
+
+const nutritionSchema = z.object({
+  calories: z.number(),
+  protein: z.number(),
+  carbs: z.number(),
+  fat: z.number(),
+  vitamins: z.record(z.number()).optional(),
+  minerals: z.record(z.number()).optional()
+});
+
 export const users = pgTable("users", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
@@ -14,16 +36,13 @@ export const recipes = pgTable("recipes", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  ingredients: json("ingredients").$type<string[]>().notNull(),
-  instructions: json("instructions").$type<string[]>().notNull(),
-  nutritionInfo: json("nutrition_info").$type<{
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  }>().notNull(),
+  ingredients: json("ingredients").$type<z.infer<typeof ingredientSchema>[]>().notNull(),
+  instructions: json("instructions").$type<z.infer<typeof instructionSchema>[]>().notNull(),
+  nutritionInfo: json("nutrition_info").$type<z.infer<typeof nutritionSchema>>().notNull(),
   imageUrl: text("image_url"),
   prepTime: integer("prep_time").notNull(),
+  cookTime: integer("cook_time").notNull(),
+  totalTime: integer("total_time").notNull(),
   userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
