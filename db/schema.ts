@@ -73,10 +73,15 @@ export const suppliers = pgTable("suppliers", {
     accessToken: string;
     refreshToken: string;
     expiresAt: number;
-  }>(),
+    scope?: string;
+    tokenType?: string;
+  } | null>().default(null),
+  isAuthenticated: boolean("is_authenticated").default(false),
   searchTags: json("search_tags").$type<string[]>().default([]),
   specialties: json("specialties").$type<string[]>().default([]),
+  lastSyncedAt: timestamp("last_synced_at"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const products = pgTable("products", {

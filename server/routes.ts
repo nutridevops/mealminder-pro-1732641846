@@ -16,14 +16,58 @@ export function registerRoutes(app: Express) {
   // OAuth routes
   app.get("/api/auth/:provider", async (req, res) => {
     const { provider } = req.params;
+    const { supplierId } = req.query;
     
+    if (!supplierId) {
+      return res.status(400).json({
+        error: "Missing supplier ID",
+        message: "Supplier ID is required for authentication"
+      });
+    }
+
     try {
+      const supplier = await db
+        .select()
+        .from(suppliers)
+        .where(eq(suppliers.id, Number(supplierId)))
+        .limit(1);
+
+      if (!supplier.length) {
+        return res.status(404).json({
+          error: "Supplier not found",
+          message: "The specified supplier does not exist"
+        });
+      }
+
+      // Store supplierId in session for callback
+      req.session.supplierId = Number(supplierId);
+
       // Initialize OAuth flow based on provider
-      // This is a placeholder - actual implementation would use proper OAuth libraries
+      const providerConfig = {
+        google: {
+          authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+          scope: 'profile email',
+          // Add other provider-specific config
+        },
+        microsoft: {
+          authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+          scope: 'profile.read',
+          // Add other provider-specific config
+        }
+      }[provider];
+
+      if (!providerConfig) {
+        return res.status(400).json({
+          error: "Invalid provider",
+          message: "The specified provider is not supported"
+        });
+      }
+
       res.json({ 
         status: "success",
         message: `OAuth flow initiated for ${provider}`,
-        authUrl: `/api/auth/${provider}/callback`
+        authUrl: `/api/auth/${provider}/callback`,
+        provider: provider
       });
     } catch (error) {
       console.error(`OAuth error with ${provider}:`, error);
@@ -37,14 +81,44 @@ export function registerRoutes(app: Express) {
   app.get("/api/auth/:provider/callback", async (req, res) => {
     const { provider } = req.params;
     const { code } = req.query;
+    const supplierId = req.session.supplierId;
+
+    if (!supplierId) {
+      return res.status(400).json({
+        error: "Missing supplier ID",
+        message: "No supplier ID found in session"
+      });
+    }
 
     try {
-      // Handle OAuth callback
-      // This is a placeholder - actual implementation would validate tokens
+      // Exchange code for tokens
+      const tokens = {
+        accessToken: "mock_access_token",
+        refreshToken: "mock_refresh_token",
+        expiresAt: Date.now() + 3600000 // 1 hour from now
+      };
+
+      // Update supplier with OAuth information
+      const [updatedSupplier] = await db
+        .update(suppliers)
+        .set({
+          oauthProvider: provider,
+          oauthTokens: tokens
+        })
+        .where(eq(suppliers.id, supplierId))
+        .returning();
+
+      if (!updatedSupplier) {
+        throw new Error("Failed to update supplier with OAuth tokens");
+      }
+
+      // Clear session
+      delete req.session.supplierId;
+
       res.json({
         status: "success",
         message: `Successfully authenticated with ${provider}`,
-        code
+        supplier: updatedSupplier
       });
     } catch (error) {
       console.error(`OAuth callback error with ${provider}:`, error);
