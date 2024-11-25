@@ -6,6 +6,7 @@ import {
   Home,
   Store
 } from "lucide-react";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 
 export default function Header() {
   const [location] = useLocation();
@@ -14,11 +15,13 @@ export default function Header() {
     <header className="border-b">
       <div className="container mx-auto px-4 py-4">
         <nav className="flex items-center justify-between">
+          {/* Left side - Logo */}
           <div className="flex items-center gap-2">
             <ChefHat className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">MealMinder</span>
           </div>
           
+          {/* Center - Navigation */}
           <div className="flex items-center gap-4">
             <Button
               variant={location === "/" ? "default" : "ghost"}
@@ -59,6 +62,11 @@ export default function Header() {
                 Suppliers
               </Link>
             </Button>
+          </div>
+
+          {/* Right side - Language Switcher */}
+          <div className="flex items-center">
+            <LanguageSwitcher />
           </div>
         </nav>
       </div>
