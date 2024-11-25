@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { insertSupplierSchema, type InsertSupplier } from "@db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Store } from "lucide-react";
 
 type AddSupplierDialogProps = {
-  onAdd: (supplier: InsertSupplier) => Promise<void>;
+  onAdd: (supplier: InsertSupplier) => Promise<any>;
 };
 
 export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
@@ -29,8 +29,10 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
         address: ""
       },
       deliveryRadius: 10,
-      active: true
-    }
+      active: true,
+      integrationSettings: null,
+      specialties: []
+    } as InsertSupplier
   });
 
   async function onSubmit(data: InsertSupplier) {
@@ -158,7 +160,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
                 <FormItem>
                   <FormLabel>Delivery Radius (km)</FormLabel>
                   <FormControl>
-                    <Input {...field} type="number" />
+                    <Input {...field} type="number" onChange={e => field.onChange(parseInt(e.target.value))} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

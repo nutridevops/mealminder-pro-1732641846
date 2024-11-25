@@ -72,6 +72,15 @@ export const suppliers = pgTable("suppliers", {
     address: string;
   }>().notNull(),
   deliveryRadius: integer("delivery_radius").notNull(), // in kilometers
+  affiliateCode: text("affiliate_code").unique(),
+  commissionRate: integer("commission_rate").default(10), // percentage
+  apiConfig: json("api_config").$type<{
+    endpoint: string;
+    authType: 'bearer' | 'basic' | 'apikey';
+    credentials: Record<string, string>;
+    webhookUrl?: string;
+  }>(),
+  specialties: json("specialties").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -96,9 +105,29 @@ export const shoppingLists = pgTable("shopping_lists", {
     quantity: number;
     supplierId: number;
   }[]>().notNull(),
-  status: text("status").notNull().default('draft'),
-  createdAt: timestamp("created_at").defaultNow(),
+  status: text("status").notNull().default('pending'),
+  createdAt: timestamp("created_at").defaultNow()
 });
+
+export const transactions = pgTable("transactions", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  supplierId: integer("supplier_id").references(() => suppliers.id),
+  userId: integer("user_id").references(() => users.id),
+  orderAmount: integer("order_amount").notNull(), // in cents
+  commissionAmount: integer("commission_amount").notNull(), // in cents
+  status: text("status").notNull().default('pending'),
+  affiliateCode: text("affiliate_code").notNull(),
+  orderReference: text("order_reference").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow()
+});
+
+// Add Zod schemas for transactions
+export const insertTransactionSchema = createInsertSchema(transactions);
+export const selectTransactionSchema = createSelectSchema(transactions);
+export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
+export type Transaction = z.infer<typeof selectTransactionSchema>;
+  // Supplier table remains the same but moved to products section
 
 // Add Zod schemas for new tables
 export const insertSupplierSchema = createInsertSchema(suppliers);

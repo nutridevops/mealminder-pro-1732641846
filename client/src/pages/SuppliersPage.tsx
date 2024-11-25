@@ -66,7 +66,7 @@ export default function SuppliersPage() {
                   </p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />
-                    <span>{supplier.location.address}</span>
+                    <span>{(supplier.location as { address: string })?.address || 'No address provided'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Truck className="h-4 w-4" />
