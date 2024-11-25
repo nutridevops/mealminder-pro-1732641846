@@ -21,36 +21,9 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [createdSupplier, setCreatedSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
-  
-  const websiteSchema = z.string()
-    .trim()
-    .toLowerCase()
-    .transform((url) => {
-      if (!url) return null;
-      // Remove any HTML characters
-      url = url.replace(/<[^>]*>/g, '');
-      // Remove www if present
-      url = url.replace(/^www\./i, '');
-      // Add https if missing
-      return url.match(/^https?:\/\//i) ? url : `https://${url}`;
-    })
-    .refine((url) => {
-      if (!url) return true;
-      try {
-        new URL(url);
-        return true;
-      } catch {
-        return false;
-      }
-    }, "Please enter a valid website URL")
-    .nullable();
 
-  const supplierFormSchema = insertSupplierSchema.extend({
-    website: websiteSchema,
-  });
-
-  const form = useForm<z.infer<typeof supplierFormSchema>>({
-    resolver: zodResolver(supplierFormSchema),
+  const form = useForm<z.infer<typeof insertSupplierSchema>>({
+    resolver: zodResolver(insertSupplierSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -64,21 +37,15 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
     }
   });
 
-  const validateWebsite = (value: string) => {
-    try {
-      supplierFormSchema.shape.website.parse(value);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
-
-  async function onSubmit(values: z.infer<typeof supplierFormSchema>) {
+  async function onSubmit(values: z.infer<typeof insertSupplierSchema>) {
     setIsSubmitting(true);
     try {
+      // Clean and transform website URL
       const sanitizedValues = {
         ...values,
-        website: values.website ? websiteSchema.parse(values.website) : null
+        website: values.website 
+          ? values.website.trim().replace(/^www\./i, '').replace(/^(?!https?:\/\/)/i, 'https://')
+          : null
       };
       
       const supplier = await onAdd(sanitizedValues);
@@ -163,7 +130,15 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
                   <FormItem>
                     <FormLabel>Website</FormLabel>
                     <FormControl>
-                      <Input {...field} type="url" />
+                      <Input 
+                        {...field} 
+                        type="url" 
+                        placeholder="https://example.com"
+                        onChange={(e) => {
+                          const value = e.target.value.trim();
+                          field.onChange(value);
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
