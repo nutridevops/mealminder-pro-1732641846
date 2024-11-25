@@ -14,16 +14,51 @@ export const recipes = pgTable("recipes", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: text("name").notNull(),
   description: text("description").notNull(),
-  ingredients: json("ingredients").$type<string[]>().notNull(),
-  instructions: json("instructions").$type<string[]>().notNull(),
+  ingredients: json("ingredients").$type<{
+    name: string;
+    amount: number;
+    unit: string;
+  }[]>().notNull(),
+  instructions: json("instructions").$type<{
+    stepNumber: number;
+    content: string;
+    richText?: string;
+  }[]>().notNull(),
   nutritionInfo: json("nutrition_info").$type<{
     calories: number;
     protein: number;
     carbs: number;
     fat: number;
+    vitamins: {
+      vitaminA?: number;
+      vitaminC?: number;
+      vitaminD?: number;
+      vitaminE?: number;
+      vitaminK?: number;
+      thiamin?: number;
+      riboflavin?: number;
+      niacin?: number;
+      b6?: number;
+      b12?: number;
+      folate?: number;
+    };
+    minerals: {
+      calcium?: number;
+      iron?: number;
+      magnesium?: number;
+      phosphorus?: number;
+      potassium?: number;
+      sodium?: number;
+      zinc?: number;
+      copper?: number;
+      manganese?: number;
+      selenium?: number;
+    };
   }>().notNull(),
   imageUrl: text("image_url"),
   prepTime: integer("prep_time").notNull(),
+  cookTime: integer("cook_time").notNull(),
+  totalTime: integer("total_time").notNull(),
   userId: integer("user_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
 });
