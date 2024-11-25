@@ -284,13 +284,6 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
-    if (!req.is('application/json')) {
-      return res.status(415).json({
-        error: "Unsupported Media Type",
-        message: "Content-Type must be application/json"
-      });
-    }
-
     try {
       const result = insertSupplierSchema.safeParse(req.body);
       if (!result.success) {

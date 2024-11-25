@@ -11,26 +11,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2 } from "lucide-react";
 import { SupplierAuthDialog } from "./SupplierAuthDialog";
 
-const websiteUrlSchema = z.string().transform((url) => {
-  if (!url) return null;
-  url = url.trim();
-  
-  // Remove protocol and www if present
-  url = url.replace(/^https?:\/\//i, '')
-           .replace(/^www\./i, '');
-  
-  // Add https:// protocol
-  return `https://${url}`;
-}).nullable();
+const websiteSchema = z.string()
+  .transform((url) => {
+    if (!url) return null;
+    // Clean the URL
+    url = url.trim();
+    return url.match(/^https?:\/\//i) ? url : `https://${url}`;
+  })
+  .nullable();
 
-// Extend the supplier form schema with custom website validation
-const supplierFormSchema = insertSupplierSchema.extend({
-  website: websiteUrlSchema,
-  specialties: z.array(z.string()).default([]),
-  searchTags: z.array(z.string()).default([]),
-  totalOrders: z.number().default(0),
-  totalRevenue: z.number().default(0),
-  totalCommission: z.number().default(0)
+// Update the supplier form schema
+const supplierFormSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  description: z.string().min(1, "Description is required"),
+  website: websiteSchema,
 });
 
 type AddSupplierDialogProps = {
@@ -65,13 +59,8 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       const sanitizedValues = {
         name: values.name.trim(),
         description: values.description.trim(),
-        website: values.website ? websiteUrlSchema.parse(values.website) : null,
-        active: true,
-        specialties: [],
-        searchTags: [],
-        totalOrders: 0,
-        totalRevenue: 0,
-        totalCommission: 0
+        website: values.website,
+        active: true
       };
 
       const supplier = await onAdd(sanitizedValues);
