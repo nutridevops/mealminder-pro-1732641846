@@ -284,41 +284,31 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
-    // Ensure JSON response
+    // Set JSON content type
     res.setHeader('Content-Type', 'application/json');
     
     try {
-      // Validate request body
-      if (!req.body || typeof req.body !== 'object') {
-        return res.status(400).json({
-          error: "Invalid request",
-          message: "Request body must be valid JSON"
-        });
-      }
-
       const payload = {
         name: req.body.name?.trim(),
         description: req.body.description?.trim(),
         website: req.body.website,
-        active: true,
-        specialties: [],
-        searchTags: [],
-        totalOrders: 0,
-        totalRevenue: 0,
-        totalCommission: 0
+        active: true
       };
 
       const [newSupplier] = await db
         .insert(suppliers)
-        .values([payload]) // Note: values() expects an array
+        .values(payload)
         .returning();
 
-      return res.status(201).json(newSupplier);
+      return res.status(201).json({
+        success: true,
+        supplier: newSupplier
+      });
     } catch (error) {
       console.error('Supplier creation error:', error);
-      return res.status(500).json({
-        error: "Server error",
-        message: error instanceof Error ? error.message : "Failed to create supplier"
+      return res.status(400).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to create supplier"
       });
     }
   });

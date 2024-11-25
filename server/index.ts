@@ -20,7 +20,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add error handling middleware
+// Add error handling middleware BEFORE routes
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Server error:', err);
   res.setHeader('Content-Type', 'application/json');
@@ -29,6 +29,9 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     message: err.message || "An unexpected error occurred"
   });
 });
+
+// Then register routes
+registerRoutes(app);
 
 // Add request logging middleware
 app.use((req, res, next) => {
