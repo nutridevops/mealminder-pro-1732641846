@@ -46,7 +46,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
     .nullable();
 
   const supplierFormSchema = insertSupplierSchema.extend({
-    website: websiteUrlSchema,
+    website: websiteSchema,
   });
 
   const form = useForm<z.infer<typeof supplierFormSchema>>({
