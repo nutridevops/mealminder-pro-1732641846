@@ -19,19 +19,26 @@ async function fetchSupplierProducts(supplierId: number): Promise<Product[]> {
 
 async function createSupplier(supplier: InsertSupplier): Promise<Supplier> {
   try {
+    const payload = {
+      name: supplier.name.trim(),
+      description: supplier.description.trim(),
+      website: supplier.website
+    };
+
     const response = await fetch('/api/suppliers', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify({
-        name: supplier.name.trim(),
-        description: supplier.description.trim(),
-        website: supplier.website,
-        active: true
-      })
+      body: JSON.stringify(payload)
     });
+
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      throw new Error('Server returned non-JSON response');
+    }
 
     const data = await response.json();
     

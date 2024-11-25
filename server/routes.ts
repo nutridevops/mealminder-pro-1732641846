@@ -284,45 +284,41 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
+    // Set JSON content type
+    res.setHeader('Content-Type', 'application/json');
+    
     try {
-      // Ensure we have a body
-      if (!req.body) {
+      // Validate request body
+      if (!req.body || typeof req.body !== 'object') {
         return res.status(400).json({
-          error: "Missing request body",
-          message: "Request body is required"
+          error: "Invalid request",
+          message: "Request body must be valid JSON"
         });
       }
 
-      // Parse and validate the supplier data
-      const result = insertSupplierSchema.safeParse(req.body);
+      const payload = {
+        name: req.body.name?.trim(),
+        description: req.body.description?.trim(),
+        website: req.body.website,
+        active: true
+      };
+
+      const result = insertSupplierSchema.safeParse(payload);
       if (!result.success) {
         return res.status(400).json({
           error: "Validation failed",
-          message: "Invalid supplier data",
           details: result.error.format()
         });
       }
 
-      // Create the supplier
       const [newSupplier] = await db
         .insert(suppliers)
-        .values({
-          name: result.data.name,
-          description: result.data.description,
-          website: result.data.website,
-          active: true,
-          specialties: [],
-          searchTags: [],
-          createdAt: new Date(),
-          updatedAt: new Date()
-        })
+        .values(result.data)
         .returning();
 
-      // Return the created supplier
       return res.status(201).json(newSupplier);
     } catch (error) {
       console.error('Supplier creation error:', error);
-      // Ensure we always return JSON
       return res.status(500).json({
         error: "Server error",
         message: error instanceof Error ? error.message : "Failed to create supplier"
