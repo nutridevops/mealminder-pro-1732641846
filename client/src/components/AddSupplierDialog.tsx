@@ -11,6 +11,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2 } from "lucide-react";
 import { SupplierAuthDialog } from "./SupplierAuthDialog";
 
+const websiteUrlSchema = z.string().transform(url => {
+  if (!url) return null;
+  // Clean URL
+  url = url.trim();
+  url = url.replace(/^www\./i, '');
+  return url.match(/^https?:\/\//i) ? url : `https://${url}`;
+}).nullable();
+
+// Extend the supplier form schema
+const supplierFormSchema = insertSupplierSchema.extend({
+  website: websiteUrlSchema
+});
+
 type AddSupplierDialogProps = {
   onAdd: (supplier: z.infer<typeof insertSupplierSchema>) => Promise<Supplier>;
 };
@@ -22,8 +35,8 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [createdSupplier, setCreatedSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof insertSupplierSchema>>({
-    resolver: zodResolver(insertSupplierSchema),
+  const form = useForm<z.infer<typeof supplierFormSchema>>({
+    resolver: zodResolver(supplierFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -37,18 +50,13 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
     }
   });
 
-  async function onSubmit(values: z.infer<typeof insertSupplierSchema>) {
+  async function onSubmit(values: z.infer<typeof supplierFormSchema>) {
     setIsSubmitting(true);
     try {
-      // Clean and transform website URL
-      const sanitizedValues = {
+      const supplier = await onAdd({
         ...values,
-        website: values.website 
-          ? values.website.trim().replace(/^www\./i, '').replace(/^(?!https?:\/\/)/i, 'https://')
-          : null
-      };
-      
-      const supplier = await onAdd(sanitizedValues);
+        website: values.website ? websiteUrlSchema.parse(values.website) : null
+      });
       setCreatedSupplier(supplier);
       form.reset();
       setOpen(false);
