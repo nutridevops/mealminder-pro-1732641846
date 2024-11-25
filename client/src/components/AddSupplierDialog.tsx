@@ -68,6 +68,12 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       form.reset();
       setOpen(false);
       setShowAuthDialog(true);
+      
+      toast({
+        title: "Success",
+        description: "Supplier added successfully",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Supplier creation error:', error);
       toast({

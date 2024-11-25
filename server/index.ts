@@ -15,9 +15,21 @@ function log(message: string) {
 }
 
 const app = express();
+
+// Add middleware for parsing JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add error handling middleware before routes
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('Server error:', err);
+  res.status(500).json({
+    error: "Server error",
+    message: err.message || "An unexpected error occurred"
+  });
+});
+
+// Add request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;

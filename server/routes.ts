@@ -284,18 +284,26 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    
     try {
+      // Ensure we have a body
+      if (!req.body) {
+        return res.status(400).json({
+          error: "Missing request body",
+          message: "Request body is required"
+        });
+      }
+
+      // Parse and validate the supplier data
       const result = insertSupplierSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({
-          error: "Invalid supplier data",
-          message: "Validation failed",
+          error: "Validation failed",
+          message: "Invalid supplier data",
           details: result.error.format()
         });
       }
 
+      // Create the supplier
       const [newSupplier] = await db
         .insert(suppliers)
         .values({
@@ -310,12 +318,14 @@ export function registerRoutes(app: Express) {
         })
         .returning();
 
+      // Return the created supplier
       return res.status(201).json(newSupplier);
     } catch (error) {
-      console.error('Failed to create supplier:', error);
+      console.error('Supplier creation error:', error);
+      // Ensure we always return JSON
       return res.status(500).json({
-        error: "Failed to create supplier",
-        message: error instanceof Error ? error.message : "Unknown error"
+        error: "Server error",
+        message: error instanceof Error ? error.message : "Failed to create supplier"
       });
     }
   });
