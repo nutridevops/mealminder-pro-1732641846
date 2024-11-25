@@ -11,30 +11,17 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2 } from "lucide-react";
 import { SupplierAuthDialog } from "./SupplierAuthDialog";
 
-const websiteUrlSchema = z.string()
-  .transform((url) => {
-    if (!url) return null;
-    // Clean the URL
-    url = url.trim();
-    if (!url) return null;
-    
-    // Remove protocol and www if present
-    url = url.replace(/^https?:\/\//i, '')
-             .replace(/^www\./i, '');
-    
-    // Add https:// protocol
-    return `https://${url}`;
-  })
-  .refine((url) => {
-    if (!url) return true;
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  }, "Please enter a valid website URL")
-  .nullable();
+const websiteUrlSchema = z.string().transform((url) => {
+  if (!url) return null;
+  url = url.trim();
+  
+  // Remove protocol and www if present
+  url = url.replace(/^https?:\/\//i, '')
+           .replace(/^www\./i, '');
+  
+  // Add https:// protocol
+  return `https://${url}`;
+}).nullable();
 
 // Extend the supplier form schema with custom website validation
 const supplierFormSchema = insertSupplierSchema.extend({
@@ -76,8 +63,15 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
     setIsSubmitting(true);
     try {
       const sanitizedValues = {
-        ...values,
-        website: values.website ? websiteUrlSchema.parse(values.website) : null
+        name: values.name.trim(),
+        description: values.description.trim(),
+        website: values.website ? websiteUrlSchema.parse(values.website) : null,
+        active: true,
+        specialties: [],
+        searchTags: [],
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalCommission: 0
       };
 
       const supplier = await onAdd(sanitizedValues);
@@ -85,17 +79,11 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       form.reset();
       setOpen(false);
       setShowAuthDialog(true);
-      toast({
-        title: "Supplier added successfully",
-        description: "Please connect your supplier account to continue",
-        variant: "default"
-      });
     } catch (error) {
       console.error('Supplier creation error:', error);
-      const errorMessage = error instanceof Error ? error.message : "Please try again";
       toast({
         title: "Failed to add supplier",
-        description: errorMessage,
+        description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive"
       });
     } finally {

@@ -284,76 +284,42 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/suppliers", async (req, res) => {
+    if (!req.is('application/json')) {
+      return res.status(415).json({
+        error: "Unsupported Media Type",
+        message: "Content-Type must be application/json"
+      });
+    }
+
     try {
-      // Validate Content-Type header
-      const contentType = req.headers['content-type'];
-      if (!contentType || !contentType.includes('application/json')) {
-        return res.status(415).json({
-          error: "Unsupported Media Type",
-          message: "Content-Type must be application/json"
-        });
-      }
-
-      console.log('Received supplier data:', JSON.stringify(req.body, null, 2));
-
       const result = insertSupplierSchema.safeParse(req.body);
       if (!result.success) {
-        console.error('Validation errors:', result.error.errors);
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Invalid supplier data",
-          validation_errors: result.error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message
-          }))
+          details: result.error.format()
         });
       }
 
-      // Prepare supplier data with all required fields
       const [newSupplier] = await db
         .insert(suppliers)
-        .values([{
+        .values({
           name: result.data.name,
           description: result.data.description,
-          website: result.data.website || null,
-          active: result.data.active ?? true,
-          affiliateCode: result.data.affiliateCode || null,
-          commissionRate: result.data.commissionRate ?? 10,
-          totalOrders: result.data.totalOrders ?? 0,
-          totalRevenue: result.data.totalRevenue ?? 0,
-          totalCommission: result.data.totalCommission ?? 0,
-          specialties: result.data.specialties ?? [],
-          searchTags: result.data.searchTags ?? [],
-          oauthProvider: null,
-          oauthId: null,
-          oauthTokens: null,
-          isAuthenticated: false,
+          website: result.data.website,
+          active: true,
+          specialties: [],
+          searchTags: [],
           createdAt: new Date(),
           updatedAt: new Date()
-        }])
+        })
         .returning();
 
-      if (!newSupplier) {
-        throw new Error("Failed to create supplier record");
-      }
-
-      console.log('Created supplier:', JSON.stringify(newSupplier, null, 2));
-      res.status(201).json(newSupplier);
+      return res.status(201).json(newSupplier);
     } catch (error) {
       console.error('Failed to create supplier:', error);
-      
-      // Handle specific database errors
-      if (error instanceof Error) {
-        if (error.message.includes('duplicate key')) {
-          return res.status(409).json({
-            error: "Supplier already exists",
-            message: "A supplier with this name already exists"
-          });
-        }
-      }
-
-      res.status(500).json({
+      return res.status(500).json({
         error: "Failed to create supplier",
-        message: error instanceof Error ? error.message : "An unexpected error occurred"
+        message: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
