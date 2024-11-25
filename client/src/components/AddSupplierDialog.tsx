@@ -14,9 +14,9 @@ import { SupplierAuthDialog } from "./SupplierAuthDialog";
 const websiteUrlSchema = z.string()
   .transform((url) => {
     if (!url) return null;
-    
-    // Remove any HTML-like content and trim
-    url = url.replace(/<[^>]*>/g, '').trim();
+    // Clean the URL
+    url = url.trim();
+    if (!url) return null;
     
     // Remove protocol and www if present
     url = url.replace(/^https?:\/\//i, '')
@@ -75,13 +75,12 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   async function onSubmit(values: z.infer<typeof supplierFormSchema>) {
     setIsSubmitting(true);
     try {
-      // Transform website URL
-      const transformedValues = {
+      const sanitizedValues = {
         ...values,
         website: values.website ? websiteUrlSchema.parse(values.website) : null
       };
 
-      const supplier = await onAdd(transformedValues);
+      const supplier = await onAdd(sanitizedValues);
       setCreatedSupplier(supplier);
       form.reset();
       setOpen(false);
@@ -165,12 +164,12 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
                     <FormLabel>Website</FormLabel>
                     <FormControl>
                       <Input 
-                        {...field} 
-                        type="url" 
+                        {...field}
+                        type="url"
                         placeholder="example.com"
                         onChange={(e) => {
-                          const value = e.target.value.replace(/<[^>]*>/g, '').trim();
-                          field.onChange(value || '');
+                          const value = e.target.value.trim();
+                          field.onChange(value);
                         }}
                         value={field.value || ''}
                       />

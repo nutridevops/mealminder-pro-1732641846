@@ -22,6 +22,7 @@ async function createSupplier(supplier: InsertSupplier): Promise<Supplier> {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     },
     body: JSON.stringify(supplier),
   });
