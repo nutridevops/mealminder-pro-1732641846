@@ -7,8 +7,8 @@ import { insertSupplierSchema, type InsertSupplier, type Supplier } from "@db/sc
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Store } from "lucide-react";
-import type { z } from "zod";
+import { Store, Loader2 } from "lucide-react";
+import { z } from "zod";
 import { SupplierAuthDialog } from "./SupplierAuthDialog";
 
 type AddSupplierDialogProps = {
@@ -22,10 +22,12 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const [createdSupplier, setCreatedSupplier] = useState<Supplier | null>(null);
   const { toast } = useToast();
   
-  const websiteSchema = z.string().url("Please enter a valid URL").or(z.string().length(0));
-  
-  const form = useForm<z.infer<typeof insertSupplierSchema>>({
-    resolver: zodResolver(insertSupplierSchema),
+  const supplierFormSchema = insertSupplierSchema.extend({
+    website: z.string().url("Please enter a valid URL").or(z.string().length(0)),
+  });
+
+  const form = useForm<z.infer<typeof supplierFormSchema>>({
+    resolver: zodResolver(supplierFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -41,7 +43,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
 
   const validateWebsite = (value: string) => {
     try {
-      websiteSchema.parse(value);
+      supplierFormSchema.shape.website.parse(value);
       return true;
     } catch (error) {
       return false;
@@ -143,11 +145,14 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <div className="animate-spin mr-2">⭮</div>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Adding Supplier...
                   </>
                 ) : (
-                  "Add Supplier"
+                  <>
+                    <Store className="mr-2 h-4 w-4" />
+                    Add Supplier
+                  </>
                 )}
               </Button>
             </form>

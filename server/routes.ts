@@ -308,20 +308,32 @@ export function registerRoutes(app: Express) {
         });
       }
 
-      // Insert supplier with validated data and handle optional fields
+      // Prepare supplier data with all required fields
+      const supplierData = {
+        name: result.data.name,
+        description: result.data.description,
+        website: result.data.website || null,
+        active: result.data.active ?? true,
+        affiliateCode: result.data.affiliateCode,
+        commissionRate: result.data.commissionRate ?? 10,
+        totalOrders: result.data.totalOrders ?? 0,
+        totalRevenue: result.data.totalRevenue ?? 0,
+        totalCommission: result.data.totalCommission ?? 0,
+        specialties: result.data.specialties ?? [],
+        searchTags: result.data.searchTags ?? [],
+        oauthProvider: result.data.oauthProvider,
+        oauthId: result.data.oauthId,
+        oauthTokens: result.data.oauthTokens ?? null,
+        isAuthenticated: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      console.log('Attempting to insert supplier with data:', JSON.stringify(supplierData, null, 2));
+
       const [newSupplier] = await db
         .insert(suppliers)
-        .values([{
-          name: result.data.name,
-          description: result.data.description,
-          website: result.data.website,
-          active: result.data.active ?? true,
-          specialties: result.data.specialties ?? [],
-          searchTags: result.data.searchTags ?? [],
-          oauthProvider: result.data.oauthProvider,
-          oauthId: result.data.oauthId,
-          oauthTokens: result.data.oauthTokens ?? null
-        }])
+        .values(supplierData)
         .returning();
 
       if (!newSupplier) {
