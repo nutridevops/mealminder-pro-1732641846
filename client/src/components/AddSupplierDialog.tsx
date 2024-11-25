@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2 } from "lucide-react";
-import { z } from "zod";
 import { SupplierAuthDialog } from "./SupplierAuthDialog";
 
 type AddSupplierDialogProps = {
@@ -25,11 +25,10 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   const websiteUrlSchema = z.string()
     .transform(url => {
       if (!url) return null;
-      // Remove any HTML content and trim
-      url = url.replace(/<[^>]*>/g, '').trim();
-      // Remove www. if present
+      // Clean the URL
+      url = url.trim();
       url = url.replace(/^www\./i, '');
-      // Add https:// if no protocol
+      // Add https:// if needed
       return url.match(/^https?:\/\//i) ? url : `https://${url}`;
     })
     .refine(url => {
