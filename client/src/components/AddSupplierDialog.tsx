@@ -24,9 +24,12 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   
   const websiteUrlSchema = z.string()
     .transform(url => {
-      if (!url) return '';
-      if (!url.match(/^https?:\/\//)) {
-        return `https://${url.replace(/^www\./, '')}`;
+      if (!url) return null;
+      // Remove any HTML-like content
+      url = url.replace(/<[^>]*>/g, '').trim();
+      // Add https:// if no protocol is specified
+      if (!url.match(/^https?:\/\//i)) {
+        return `https://${url.replace(/^www\./i, '')}`;
       }
       return url;
     })
@@ -38,7 +41,8 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       } catch {
         return false;
       }
-    }, "Please enter a valid URL");
+    }, "Please enter a valid URL")
+    .nullable();
 
   const supplierFormSchema = insertSupplierSchema.extend({
     website: websiteUrlSchema,
@@ -68,10 +72,16 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
     }
   };
 
-  async function onSubmit(values: z.infer<typeof insertSupplierSchema>) {
+  async function onSubmit(values: z.infer<typeof supplierFormSchema>) {
     setIsSubmitting(true);
     try {
-      const supplier = await onAdd(values);
+      // Sanitize website URL
+      const sanitizedValues = {
+        ...values,
+        website: values.website ? values.website.trim() : null
+      };
+      
+      const supplier = await onAdd(sanitizedValues);
       setCreatedSupplier(supplier);
       form.reset();
       setOpen(false);
