@@ -11,17 +11,39 @@ import { useToast } from "@/hooks/use-toast";
 import { Store, Loader2 } from "lucide-react";
 import { SupplierAuthDialog } from "./SupplierAuthDialog";
 
-const websiteUrlSchema = z.string().transform(url => {
-  if (!url) return null;
-  // Clean URL
-  url = url.trim();
-  url = url.replace(/^www\./i, '');
-  return url.match(/^https?:\/\//i) ? url : `https://${url}`;
-}).nullable();
+const websiteUrlSchema = z.string()
+  .transform((url) => {
+    if (!url) return null;
+    
+    // Remove any HTML-like content and trim
+    url = url.replace(/<[^>]*>/g, '').trim();
+    
+    // Remove protocol and www if present
+    url = url.replace(/^https?:\/\//i, '')
+             .replace(/^www\./i, '');
+    
+    // Add https:// protocol
+    return `https://${url}`;
+  })
+  .refine((url) => {
+    if (!url) return true;
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Please enter a valid website URL")
+  .nullable();
 
-// Extend the supplier form schema
+// Extend the supplier form schema with custom website validation
 const supplierFormSchema = insertSupplierSchema.extend({
-  website: websiteUrlSchema
+  website: websiteUrlSchema,
+  specialties: z.array(z.string()).default([]),
+  searchTags: z.array(z.string()).default([]),
+  totalOrders: z.number().default(0),
+  totalRevenue: z.number().default(0),
+  totalCommission: z.number().default(0)
 });
 
 type AddSupplierDialogProps = {
@@ -53,10 +75,13 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   async function onSubmit(values: z.infer<typeof supplierFormSchema>) {
     setIsSubmitting(true);
     try {
-      const supplier = await onAdd({
+      // Transform website URL
+      const transformedValues = {
         ...values,
         website: values.website ? websiteUrlSchema.parse(values.website) : null
-      });
+      };
+
+      const supplier = await onAdd(transformedValues);
       setCreatedSupplier(supplier);
       form.reset();
       setOpen(false);
@@ -67,6 +92,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
         variant: "default"
       });
     } catch (error) {
+      console.error('Supplier creation error:', error);
       const errorMessage = error instanceof Error ? error.message : "Please try again";
       toast({
         title: "Failed to add supplier",
@@ -141,11 +167,12 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
                       <Input 
                         {...field} 
                         type="url" 
-                        placeholder="https://example.com"
+                        placeholder="example.com"
                         onChange={(e) => {
-                          const value = e.target.value.trim();
-                          field.onChange(value);
+                          const value = e.target.value.replace(/<[^>]*>/g, '').trim();
+                          field.onChange(value || '');
                         }}
+                        value={field.value || ''}
                       />
                     </FormControl>
                     <FormMessage />
