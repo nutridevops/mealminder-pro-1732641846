@@ -25,11 +25,11 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
       name: "",
       description: "",
       website: "",
-      location: JSON.stringify({
+      location: {
         latitude: 0,
         longitude: 0,
         address: ""
-      }),
+      },
       deliveryRadius: 10,
       active: true,
       specialties: [],
@@ -42,15 +42,7 @@ export function AddSupplierDialog({ onAdd }: AddSupplierDialogProps) {
   async function onSubmit(values: z.infer<typeof insertSupplierSchema>) {
     setIsSubmitting(true);
     try {
-      // Ensure location is properly stringified
-      const formattedData = {
-        ...values,
-        location: typeof values.location === 'string' 
-          ? values.location 
-          : JSON.stringify(values.location)
-      };
-
-      await onAdd(formattedData);
+      await onAdd(values);
       setOpen(false);
       form.reset();
       toast({
