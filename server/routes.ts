@@ -464,7 +464,18 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ errors: result.error.errors });
       }
 
-      const [newMealPlan] = await db.insert(mealPlans).values(result.data).returning();
+      // Transform the data to match the expected schema
+      const mealPlanData = {
+        date: result.data.date,
+        recipes: {
+          breakfast: result.data.recipes?.breakfast,
+          lunch: result.data.recipes?.lunch,
+          dinner: result.data.recipes?.dinner
+        },
+        userId: result.data.userId
+      };
+
+      const [newMealPlan] = await db.insert(mealPlans).values(mealPlanData).returning();
       res.status(201).json(newMealPlan);
     } catch (error) {
       console.error('Error creating meal plan:', error);
