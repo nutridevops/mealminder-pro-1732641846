@@ -1,0 +1,252 @@
+MealMinder Pro - Advanced Implementation Details (Part 3)
+4. Scaling and Monitoring Strategy (Continued)
+C. Logging Strategy
+typescriptCopy// Structured Logging Implementation
+interface LogEntry {
+  timestamp: string;
+  level: LogLevel;
+  service: string;
+  traceId: string;
+  userId?: string;
+  message: string;
+  metadata: Record<string, any>;
+  context?: LogContext;
+}
+
+class Logger {
+  private static instance: Logger;
+  
+  static getInstance(): Logger {
+    if (!Logger.instance) {
+      Logger.instance = new Logger();
+    }
+    return Logger.instance;
+  }
+
+  async log(entry: LogEntry): Promise<void> {
+    // Add correlation ID for request tracking
+    const enrichedEntry = {
+      ...entry,
+      correlationId: this.getCorrelationId(),
+      environment: process.env.NODE_ENV,
+      version: process.env.APP_VERSION,
+    };
+
+    // Store in elasticsearch for analysis
+    await elasticsearch.index({
+      index: 'application-logs',
+      body: enrichedEntry,
+    });
+
+    // Alert if error
+    if (entry.level === 'error') {
+      await this.alertOnError(enrichedEntry);
+    }
+  }
+
+  private async alertOnError(entry: LogEntry): Promise<void> {
+    if (this.shouldAlert(entry)) {
+      await AlertService.sendAlert({
+        level: 'error',
+        service: entry.service,
+        message: entry.message,
+        metadata: entry.metadata,
+      });
+    }
+  }
+}
+D. Performance Monitoring
+typescriptCopy// Performance Monitoring Implementation
+class PerformanceMonitor {
+  private metrics: MetricsCollector;
+
+  async trackEndpointPerformance(req: Request, res: Response, next: NextFunction) {
+    const startTime = process.hrtime();
+
+    res.on('finish', () => {
+      const [seconds, nanoseconds] = process.hrtime(startTime);
+      const duration = seconds * 1000 + nanoseconds / 1000000;
+
+      this.metrics.recordMetric({
+        name: 'endpoint_response_time',
+        value: duration,
+        tags: {
+          path: req.path,
+          method: req.method,
+          status: res.statusCode,
+        },
+      });
+    });
+
+    next();
+  }
+
+  async monitorDatabasePerformance(query: string, params: any[]): Promise<void> {
+    const startTime = process.hrtime();
+
+    try {
+      await db.query(query, params);
+    } finally {
+      const [seconds, nanoseconds] = process.hrtime(startTime);
+      const duration = seconds * 1000 + nanoseconds / 1000000;
+
+      this.metrics.recordMetric({
+        name: 'database_query_time',
+        value: duration,
+        tags: {
+          query_type: this.getQueryType(query),
+          table: this.getQueryTable(query),
+        },
+      });
+    }
+  }
+}
+E. Load Balancing and Scaling
+typescriptCopy// Load Balancer Configuration
+interface LoadBalancerConfig {
+  algorithm: 'round-robin' | 'least-connections' | 'ip-hash';
+  healthCheck: {
+    path: string;
+    interval: number;
+    timeout: number;
+    unhealthyThreshold: number;
+    healthyThreshold: number;
+  };
+  ssl: {
+    enabled: boolean;
+    cert: string;
+    key: string;
+  };
+  rateLimiting: {
+    enabled: boolean;
+    requestsPerSecond: number;
+    burstSize: number;
+  };
+}
+
+// Auto-scaling Configuration
+interface AutoScalingConfig {
+  services: {
+    [key: string]: {
+      minInstances: number;
+      maxInstances: number;
+      metrics: {
+        cpu: {
+          targetUtilization: number;
+        };
+        memory: {
+          targetUtilization: number;
+        };
+        customMetrics?: {
+          name: string;
+          targetValue: number;
+        }[];
+      };
+      cooldownPeriod: number;
+    };
+  };
+}
+F. Distributed Tracing
+typescriptCopy// Distributed Tracing Implementation
+class TracingService {
+  private tracer: Tracer;
+
+  async startSpan(name: string, options?: SpanOptions): Promise<Span> {
+    const span = this.tracer.startSpan(name, options);
+    
+    span.setAttributes({
+      'service.name': process.env.SERVICE_NAME,
+      'service.version': process.env.SERVICE_VERSION,
+      'deployment.environment': process.env.NODE_ENV,
+    });
+
+    return span;
+  }
+
+  async traceRequest(req: Request, res: Response, next: NextFunction) {
+    const span = await this.startSpan('http_request');
+
+    span.setAttributes({
+      'http.method': req.method,
+      'http.url': req.url,
+      'http.path': req.path,
+      'http.host': req.hostname,
+    });
+
+    // Inject trace context into response headers
+    const traceContext = this.tracer.getCurrentSpan()?.context();
+    if (traceContext) {
+      this.tracer.inject(traceContext, {
+        setHeader: (k, v) => res.setHeader(k, v),
+      });
+    }
+
+    res.on('finish', () => {
+      span.setAttributes({
+        'http.status_code': res.statusCode,
+        'http.response_content_length': res.get('content-length'),
+      });
+      span.end();
+    });
+
+    next();
+  }
+}
+G. Metrics Dashboard Configuration
+typescriptCopy// Metrics Dashboard Configuration
+interface DashboardConfig {
+  panels: {
+    [key: string]: {
+      type: 'graph' | 'singlestat' | 'table' | 'heatmap';
+      title: string;
+      metrics: {
+        query: string;
+        legend: string;
+        thresholds?: number[];
+      }[];
+      alerts?: {
+        name: string;
+        conditions: AlertCondition[];
+        notifications: NotificationChannel[];
+      }[];
+    };
+  };
+  layouts: {
+    [key: string]: {
+      panels: string[];
+      arrangement: 'grid' | 'horizontal' | 'vertical';
+    };
+  };
+}
+
+// Implementation of metrics collection
+class MetricsCollector {
+  private static instance: MetricsCollector;
+  private client: PrometheusClient;
+
+  private constructor() {
+    this.client = new PrometheusClient({
+      endpoint: process.env.PROMETHEUS_ENDPOINT,
+    });
+  }
+
+  async collectServiceMetrics(): Promise<void> {
+    // Collect system metrics
+    const metrics = await this.gatherSystemMetrics();
+    
+    // Store metrics
+    await this.client.pushMetrics(metrics);
+    
+    // Check for alerts
+    await this.checkAlertConditions(metrics);
+  }
+
+  private async gatherSystemMetrics(): Promise<ServiceMetrics> {
+    return {
+      cpu: await this.getCPUMetrics(),
+      memory: await this.getMemoryMetrics(),
+      network: await this.getNetworkMetrics(),
+      application: await this.getApplicationMetrics(),
+    };
+  }
+}

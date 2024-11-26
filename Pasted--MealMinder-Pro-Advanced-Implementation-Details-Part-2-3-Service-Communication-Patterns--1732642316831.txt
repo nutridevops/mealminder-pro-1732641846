@@ -1,0 +1,222 @@
+# MealMinder Pro - Advanced Implementation Details (Part 2)
+
+## 3. Service Communication Patterns
+
+### A. Event-Driven Architecture
+
+```typescript
+// Event Types and Handlers
+interface EventTypes {
+  // User Events
+  'user.preference.updated': {
+    userId: string;
+    preferences: PreferenceUpdate;
+  };
+  'user.location.changed': {
+    userId: string;
+    oldLocation: Location;
+    newLocation: Location;
+  };
+  'user.health.metric.recorded': {
+    userId: string;
+    metric: HealthMetric;
+  };
+
+  // Order Events
+  'order.created': {
+    orderId: string;
+    userId: string;
+    items: OrderItem[];
+  };
+  'order.status.updated': {
+    orderId: string;
+    status: OrderStatus;
+  };
+
+  // Health Analysis Events
+  'health.analysis.completed': {
+    analysisId: string;
+    userId: string;
+    results: HealthAnalysis;
+  };
+}
+
+// Event Bus Implementation
+class EventBus {
+  private static instance: EventBus;
+  private subscribers: Map<string, Function[]>;
+
+  private constructor() {
+    this.subscribers = new Map();
+  }
+
+  static getInstance(): EventBus {
+    if (!EventBus.instance) {
+      EventBus.instance = new EventBus();
+    }
+    return EventBus.instance;
+  }
+
+  subscribe<T extends keyof EventTypes>(
+    event: T,
+    callback: (data: EventTypes[T]) => void
+  ) {
+    const subscribers = this.subscribers.get(event) || [];
+    subscribers.push(callback);
+    this.subscribers.set(event, subscribers);
+  }
+
+  publish<T extends keyof EventTypes>(event: T, data: EventTypes[T]) {
+    const subscribers = this.subscribers.get(event) || [];
+    subscribers.forEach(callback => callback(data));
+  }
+}
+```
+
+### B. Service Integration
+
+```typescript
+// Service Integration Layer
+class ServiceIntegration {
+  // Health Service Integration
+  async integrateHealthAnalysis(userId: string, foodChoice: FoodChoice): Promise<void> {
+    try {
+      // Perform health analysis
+      const analysis = await healthService.analyzeFoodChoice(foodChoice);
+
+      // Update user profile
+      await userService.updateHealthMetrics(userId, analysis);
+
+      // Notify recommendation service
+      EventBus.getInstance().publish('health.analysis.completed', {
+        analysisId: uuid(),
+        userId,
+        results: analysis
+      });
+
+    } catch (error) {
+      logger.error('Health analysis integration error:', error);
+      throw new ServiceIntegrationError('Health analysis failed');
+    }
+  }
+
+  // Location Service Integration
+  async processLocationUpdate(userId: string, newLocation: Location): Promise<void> {
+    try {
+      // Update user location
+      await userService.updateLocation(userId, newLocation);
+
+      // Find nearby venues
+      const venues = await locationService.findHealthyVenues(newLocation);
+
+      // Update recommendations
+      await recommendationService.updateLocationBasedSuggestions(userId, venues);
+
+      // Notify interested services
+      EventBus.getInstance().publish('user.location.changed', {
+        userId,
+        oldLocation: user.location,
+        newLocation
+      });
+
+    } catch (error) {
+      logger.error('Location update integration error:', error);
+      throw new ServiceIntegrationError('Location update failed');
+    }
+  }
+}
+```
+
+## 4. Scaling and Monitoring Strategy
+
+### A. Infrastructure Scaling
+
+```yaml
+# kubernetes/scaling-config.yaml
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      targetAverageUtilization: 80
+```
+
+### B. Monitoring Implementation
+
+```typescript
+// Monitoring Service
+class MonitoringService {
+  private metrics: PrometheusMetrics;
+  private tracing: JaegerTracing;
+
+  // Performance Metrics
+  async trackServiceMetrics(metric: ServiceMetric): Promise<void> {
+    try {
+      // Record response time
+      this.metrics.recordResponseTime({
+        service: metric.service,
+        endpoint: metric.endpoint,
+        duration: metric.duration
+      });
+
+      // Track error rates
+      this.metrics.recordError({
+        service: metric.service,
+        type: metric.errorType,
+        message: metric.errorMessage
+      });
+
+      // Monitor resource usage
+      this.metrics.recordResourceUsage({
+        service: metric.service,
+        cpu: metric.cpuUsage,
+        memory: metric.memoryUsage
+      });
+
+    } catch (error) {
+      logger.error('Metrics recording error:', error);
+    }
+  }
+
+  // Health Checks
+  async performHealthCheck(): Promise<HealthStatus> {
+    const services = [
+      'api',
+      'chat-service',
+      'health-service',
+      'location-service'
+    ];
+
+    const healthStatus = await Promise.all(
+      services.map(async service => {
+        try {
+          const status = await this.checkServiceHealth(service);
+          return { service, status, timestamp: new Date() };
+        } catch (error) {
+          return { service, status: 'failed', error };
+        }
+      })
+    );
+
+    return { services: healthStatus, timestamp: new Date() };
+  }
+}
+```
+
+### C. Logging Strategy
+
+```
