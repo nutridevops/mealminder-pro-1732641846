@@ -5,12 +5,23 @@ import {
   mealPlans, 
   suppliers,
   products,
+  priceHistory,
   insertRecipeSchema, 
   insertMealPlanSchema,
   insertSupplierSchema,
   insertProductSchema
 } from "@db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
+import type { Request } from "express";
+
+// Extend Express Request type to include session
+declare module 'express-serve-static-core' {
+  interface Request {
+    session: {
+      supplierId?: number;
+    }
+  }
+}
 
 export function registerRoutes(app: Express) {
   // OAuth routes
