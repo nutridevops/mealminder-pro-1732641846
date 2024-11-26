@@ -4,7 +4,8 @@ import {
   CalendarDays, 
   ChefHat, 
   Home,
-  Store
+  Store,
+  ShoppingCart
 } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
@@ -60,6 +61,16 @@ export default function Header() {
               <Link href="/suppliers" className="flex items-center gap-2">
                 <Store className="h-4 w-4" />
                 Suppliers
+              </Link>
+            </Button>
+
+            <Button
+              variant={location === "/shopping-list" ? "default" : "ghost"}
+              asChild
+            >
+              <Link href="/shopping-list" className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4" />
+                Shopping List
               </Link>
             </Button>
           </div>

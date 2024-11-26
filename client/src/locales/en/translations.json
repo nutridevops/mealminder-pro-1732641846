@@ -43,5 +43,22 @@
     "addSupplier": "Add New Supplier",
     "active": "Active",
     "inactive": "Inactive"
+  },
+  "shopping": {
+    "title": "Shopping List",
+    "quantity": "Quantity",
+    "price": "Price",
+    "stock": "Stock",
+    "actions": "Actions",
+    "inStock": "In Stock",
+    "outOfStock": "Out of Stock",
+    "checkStock": "Check Stock",
+    "comparePrices": "Compare Prices",
+    "updateList": "Update List",
+    "updating": "Updating...",
+    "addedToList": "Items added to shopping list",
+    "failedToAdd": "Failed to add items",
+    "listUpdated": "Shopping list updated",
+    "failedToUpdate": "Failed to update list"
   }
 }

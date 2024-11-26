@@ -10,6 +10,7 @@ import HomePage from "./pages/HomePage";
 import RecipesPage from "./pages/RecipesPage";
 import PlannerPage from "./pages/PlannerPage";
 import SuppliersPage from "./pages/SuppliersPage";
+import ShoppingListPage from "./pages/ShoppingListPage";
 import Header from "./components/Header";
 
 function Router() {
@@ -22,6 +23,7 @@ function Router() {
           <Route path="/recipes" component={RecipesPage} />
           <Route path="/planner" component={PlannerPage} />
           <Route path="/suppliers" component={SuppliersPage} />
+          <Route path="/shopping-list" component={ShoppingListPage} />
           <Route>404 Page Not Found</Route>
         </Switch>
       </main>
