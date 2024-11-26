@@ -1,4 +1,4 @@
-import { pgTable, text, integer, timestamp, json, date, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, timestamp, json, jsonb, date, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -73,6 +73,8 @@ export const suppliers = pgTable("suppliers", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   website: text("website"),
+  apiConfig: json("api_config").$type<Record<string, any>>().default(null),
+  location: jsonb("location"),
   active: boolean("active").default(true),
   affiliateCode: text("affiliate_code").unique(),
   commissionRate: integer("commission_rate").default(10), // percentage
