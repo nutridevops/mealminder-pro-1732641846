@@ -14,6 +14,28 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import type { Request } from "express";
 
+type NutritionInfo = {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  vitamins?: Record<string, number>;
+  minerals?: Record<string, number>;
+};
+
+type PriceData = {
+  productId: number;
+  supplierId: number;
+  supplierName: string;
+  price: number;
+  inStock: boolean;
+  stockLevel: number;
+  expectedRestockDate: Date | null;
+  priceHistory: typeof priceHistory.$inferSelect[];
+  priceChange: number;
+  isLowestPrice: boolean;
+};
+
 // Extend Express Request type to include session
 declare module 'express-serve-static-core' {
   interface Request {
@@ -164,6 +186,15 @@ export function registerRoutes(app: Express) {
       }
 
       // Transform and validate the data
+      const nutritionInfo: NutritionInfo = {
+        calories: Number(result.data.nutritionInfo?.calories || 0),
+        protein: Number(result.data.nutritionInfo?.protein || 0),
+        carbs: Number(result.data.nutritionInfo?.carbs || 0),
+        fat: Number(result.data.nutritionInfo?.fat || 0),
+        vitamins: result.data.nutritionInfo?.vitamins as Record<string, number>,
+        minerals: result.data.nutritionInfo?.minerals as Record<string, number>
+      };
+
       const recipeData = {
         name: result.data.name,
         description: result.data.description,
@@ -181,24 +212,7 @@ export function registerRoutes(app: Express) {
               richText: String(inst?.richText || '')
             }))
           : [],
-        nutritionInfo: {
-          calories: Number(result.data.nutritionInfo?.calories || 0),
-          protein: Number(result.data.nutritionInfo?.protein || 0),
-          carbs: Number(result.data.nutritionInfo?.carbs || 0),
-          fat: Number(result.data.nutritionInfo?.fat || 0),
-          vitamins: result.data.nutritionInfo && typeof result.data.nutritionInfo === 'object' && result.data.nutritionInfo.vitamins
-            ? Object.fromEntries(
-                Object.entries(result.data.nutritionInfo.vitamins)
-                  .map(([k, v]) => [k, Number(v)])
-              )
-            : {},
-          minerals: result.data.nutritionInfo && typeof result.data.nutritionInfo === 'object' && result.data.nutritionInfo.minerals
-            ? Object.fromEntries(
-                Object.entries(result.data.nutritionInfo.minerals)
-                  .map(([k, v]) => [k, Number(v)])
-              )
-            : {}
-        },
+        nutritionInfo,
         prepTime: Number(result.data.prepTime || 0),
         cookTime: Number(result.data.cookTime || 0),
         totalTime: Number(result.data.totalTime || 0),
@@ -354,7 +368,26 @@ export function registerRoutes(app: Express) {
   app.get("/api/products/:id/compare-prices", async (req, res) => {
     try {
       const productId = parseInt(req.params.id);
-      
+      if (isNaN(productId)) {
+        return res.status(400).json({
+          error: "Invalid product ID",
+          message: "Product ID must be a number"
+        });
+      }
+
+      // Check if product exists
+      const product = await db.select()
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
+
+      if (!product.length) {
+        return res.status(404).json({
+          error: "Product not found",
+          message: "No product found with the specified ID"
+        });
+      }
+
       // Get current prices from all suppliers
       const currentPrices = await db.select({
         productId: products.id,
@@ -377,7 +410,7 @@ export function registerRoutes(app: Express) {
         .limit(10);
 
       // Calculate price trends and changes
-      const priceData = currentPrices.map(price => {
+      const priceData: PriceData[] = currentPrices.map(price => {
         const supplierHistory = history.filter(h => h.supplierId === price.supplierId);
         const previousPrice = supplierHistory[0]?.price;
         const priceChange = previousPrice ? ((price.price - previousPrice) / previousPrice) * 100 : 0;
@@ -392,10 +425,10 @@ export function registerRoutes(app: Express) {
 
       res.json(priceData);
     } catch (error) {
-      console.error('Failed to compare prices:', error);
+      console.error('Price comparison error:', error);
       res.status(500).json({
         error: "Failed to compare prices",
-        message: error instanceof Error ? error.message : "Unknown error"
+        message: error instanceof Error ? error.message : "Unknown error occurred"
       });
     }
   });
