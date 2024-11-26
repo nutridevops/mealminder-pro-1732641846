@@ -340,6 +340,89 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.get("/api/products/:id/compare-prices", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      
+      // Get current prices from all suppliers
+      const currentPrices = await db.select({
+        productId: products.id,
+        supplierId: suppliers.id,
+        supplierName: suppliers.name,
+        price: products.price,
+        inStock: products.inStock,
+        stockLevel: products.stockLevel,
+        expectedRestockDate: products.expectedRestockDate
+      })
+      .from(products)
+      .innerJoin(suppliers, eq(products.supplierId, suppliers.id))
+      .where(eq(products.id, productId));
+
+      // Get price history
+      const history = await db.select()
+        .from(priceHistory)
+        .where(eq(priceHistory.productId, productId))
+        .orderBy(desc(priceHistory.recordedAt))
+        .limit(10);
+
+      // Calculate price trends and changes
+      const priceData = currentPrices.map(price => {
+        const supplierHistory = history.filter(h => h.supplierId === price.supplierId);
+        const previousPrice = supplierHistory[0]?.price;
+        const priceChange = previousPrice ? ((price.price - previousPrice) / previousPrice) * 100 : 0;
+
+        return {
+          ...price,
+          priceHistory: supplierHistory,
+          priceChange,
+          isLowestPrice: Math.min(...currentPrices.map(p => p.price)) === price.price
+        };
+      });
+
+      res.json(priceData);
+    } catch (error) {
+      console.error('Failed to compare prices:', error);
+      res.status(500).json({
+        error: "Failed to compare prices",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/products/:id/stock", async (req, res) => {
+    try {
+      const productId = parseInt(req.params.id);
+      const supplierId = parseInt(req.query.supplierId as string);
+
+      const [product] = await db.select()
+        .from(products)
+        .where(and(
+          eq(products.id, productId),
+          eq(products.supplierId, supplierId)
+        ));
+
+      if (!product) {
+        return res.status(404).json({
+          error: "Product not found",
+          message: "Product not found for the specified supplier"
+        });
+      }
+
+      res.json({
+        inStock: product.inStock,
+        stockLevel: product.stockLevel,
+        lowStockThreshold: product.lowStockThreshold,
+        expectedRestockDate: product.expectedRestockDate
+      });
+    } catch (error) {
+      console.error('Failed to check stock:', error);
+      res.status(500).json({
+        error: "Failed to check stock",
+        message: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   app.get("/api/suppliers/:supplierId/products", async (req, res) => {
     try {
       const supplierId = parseInt(req.params.supplierId);

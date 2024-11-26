@@ -99,8 +99,30 @@ export const products = pgTable("products", {
   price: integer("price").notNull(), // in cents
   unit: text("unit").notNull(),
   inStock: boolean("in_stock").default(true),
+  stockLevel: integer("stock_level").default(0),
+  lowStockThreshold: integer("low_stock_threshold").default(10),
+  expectedRestockDate: timestamp("expected_restock_date"),
   category: text("category").notNull(),
   imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const priceHistory = pgTable("price_history", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  productId: integer("product_id").references(() => products.id),
+  supplierId: integer("supplier_id").references(() => suppliers.id),
+  price: integer("price").notNull(), // in cents
+  recordedAt: timestamp("recorded_at").defaultNow(),
+});
+
+export const priceAlerts = pgTable("price_alerts", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  productId: integer("product_id").references(() => products.id),
+  userId: integer("user_id").references(() => users.id),
+  targetPrice: integer("target_price").notNull(), // in cents
+  percentage: integer("percentage").notNull(), // percentage change to trigger alert
+  isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
