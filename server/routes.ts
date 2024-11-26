@@ -80,12 +80,10 @@ export function registerRoutes(app: Express) {
         google: {
           authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
           scope: 'profile email',
-          // Add other provider-specific config
         },
         microsoft: {
           authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
           scope: 'profile.read',
-          // Add other provider-specific config
         }
       }[provider];
 
@@ -191,8 +189,8 @@ export function registerRoutes(app: Express) {
         protein: Number(result.data.nutritionInfo?.protein || 0),
         carbs: Number(result.data.nutritionInfo?.carbs || 0),
         fat: Number(result.data.nutritionInfo?.fat || 0),
-        vitamins: result.data.nutritionInfo?.vitamins as Record<string, number>,
-        minerals: result.data.nutritionInfo?.minerals as Record<string, number>
+        vitamins: result.data.nutritionInfo?.vitamins || {},
+        minerals: result.data.nutritionInfo?.minerals || {}
       };
 
       const recipeData = {
@@ -206,7 +204,7 @@ export function registerRoutes(app: Express) {
             }))
           : [],
         instructions: Array.isArray(result.data.instructions)
-          ? result.data.instructions.map((inst, index) => ({
+          ? result.data.instructions.map((inst: any, index) => ({
               stepNumber: Number(inst?.stepNumber || index + 1),
               content: String(inst?.content || ''),
               richText: String(inst?.richText || '')
@@ -244,59 +242,6 @@ export function registerRoutes(app: Express) {
     }
   });
 
-  // Meal Plan routes
-  app.get("/api/meal-plans", async (req, res) => {
-    try {
-      const allMealPlans = await db.select().from(mealPlans);
-      res.json(allMealPlans);
-    } catch (error) {
-      res.status(500).send("Failed to fetch meal plans");
-    }
-  });
-
-  app.post("/api/meal-plans", async (req, res) => {
-    try {
-      const result = insertMealPlanSchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ errors: result.error.errors });
-      }
-
-      // Ensure recipes object has the correct structure with proper typing
-      const inputRecipes = result.data.recipes as {
-        breakfast?: number | undefined;
-        lunch?: number | undefined;
-        dinner?: number | undefined;
-      };
-
-      // Build recipes object matching the schema type
-      const recipes = {
-        breakfast: inputRecipes.breakfast || undefined,
-        lunch: inputRecipes.lunch || undefined,
-        dinner: inputRecipes.dinner || undefined
-      };
-
-      const [newMealPlan] = await db.insert(mealPlans).values({
-        ...result.data,
-        recipes
-      }).returning();
-
-      res.status(201).json(newMealPlan);
-    } catch (error) {
-      console.error('Error creating meal plan:', error);
-      res.status(500).send("Failed to create meal plan");
-    }
-  });
-
-  app.patch("/api/meal-plans/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const [updatedMealPlan] = await db
-        .update(mealPlans)
-        .set(req.body)
-        .where(eq(mealPlans.id, id))
-        .returning();
-      
-      if (!updatedMealPlan) {
   // Supplier routes
   app.get("/api/suppliers", async (req, res) => {
     try {
@@ -416,7 +361,13 @@ export function registerRoutes(app: Express) {
         const priceChange = previousPrice ? ((price.price - previousPrice) / previousPrice) * 100 : 0;
 
         return {
-          ...price,
+          productId: price.productId,
+          supplierId: price.supplierId,
+          supplierName: price.supplierName,
+          price: price.price,
+          inStock: price.inStock ?? false,
+          stockLevel: price.stockLevel ?? 0,
+          expectedRestockDate: price.expectedRestockDate,
           priceHistory: supplierHistory,
           priceChange,
           isLowestPrice: Math.min(...currentPrices.map(p => p.price)) === price.price
@@ -495,6 +446,42 @@ export function registerRoutes(app: Express) {
       res.status(500).send("Failed to create product");
     }
   });
+
+  // Meal Plan routes
+  app.get("/api/meal-plans", async (req, res) => {
+    try {
+      const allMealPlans = await db.select().from(mealPlans);
+      res.json(allMealPlans);
+    } catch (error) {
+      res.status(500).send("Failed to fetch meal plans");
+    }
+  });
+
+  app.post("/api/meal-plans", async (req, res) => {
+    try {
+      const result = insertMealPlanSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ errors: result.error.errors });
+      }
+
+      const [newMealPlan] = await db.insert(mealPlans).values(result.data).returning();
+      res.status(201).json(newMealPlan);
+    } catch (error) {
+      console.error('Error creating meal plan:', error);
+      res.status(500).send("Failed to create meal plan");
+    }
+  });
+
+  app.patch("/api/meal-plans/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const [updatedMealPlan] = await db
+        .update(mealPlans)
+        .set(req.body)
+        .where(eq(mealPlans.id, id))
+        .returning();
+      
+      if (!updatedMealPlan) {
         return res.status(404).send("Meal plan not found");
       }
 
