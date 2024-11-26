@@ -88,7 +88,6 @@ export const suppliers = pgTable("suppliers", {
   specialties: json("specialties").$type<string[]>().default([]),
   lastSyncedAt: timestamp("last_synced_at"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const products = pgTable("products", {
@@ -105,7 +104,6 @@ export const products = pgTable("products", {
   category: text("category").notNull(),
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const priceHistory = pgTable("price_history", {
@@ -148,7 +146,6 @@ export const transactions = pgTable("transactions", {
   affiliateCode: text("affiliate_code").notNull(),
   orderReference: text("order_reference").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow()
 });
 
 // Add Zod schemas for transactions
@@ -156,7 +153,6 @@ export const insertTransactionSchema = createInsertSchema(transactions);
 export const selectTransactionSchema = createSelectSchema(transactions);
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type Transaction = z.infer<typeof selectTransactionSchema>;
-  // Supplier table remains the same but moved to products section
 
 // Add Zod schemas for new tables
 export const insertSupplierSchema = createInsertSchema(suppliers);
